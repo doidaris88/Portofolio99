@@ -5,13 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <!-- PWA & Mobile Meta -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0f172a">
     
-    <title>Portfolio Pro v10.1 Multi-Porto</title>
+    <title>Portfolio Pro v10.1 Multi</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -27,7 +26,6 @@
         .font-bursa { font-family: 'Roboto Mono', monospace; font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
         .glass-panel { background: rgba(30, 41, 59, 0.5); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.05); }
         
-        /* Portfolio Tabs Styling */
         .tab-btn { transition: all 0.2s ease; display: flex; align-items: center; gap: 4px; border-bottom: 3px solid transparent; height: 100%; min-width: 100px; justify-content: space-between; }
         .tab-active { background: rgba(79, 70, 229, 0.2); border-bottom-color: #6366f1; color: white; }
         .tab-inactive { color: #64748b; }
@@ -46,7 +44,7 @@
         .loader { border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid #22d3ee; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        .custom-scroll::-webkit-scrollbar { height: 4px; width: 4px; }
+        .custom-scroll::-webkit-scrollbar { height: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
         
         input { background: transparent; outline: none; border: none; }
@@ -54,7 +52,6 @@
 </head>
 <body class="p-0">
 
-    <!-- NAVIGATION TABS -->
     <nav class="w-full bg-slate-900/80 backdrop-blur-xl border-b border-white/5 sticky top-0 z-50">
         <div class="max-w-[1400px] mx-auto flex items-center overflow-x-auto custom-scroll px-2">
             <div id="portfolioTabs" class="flex items-center h-12"></div>
@@ -64,12 +61,10 @@
 
     <div class="max-w-[1400px] mx-auto space-y-6 pb-20 p-4 sm:p-6"> 
         
-        <!-- HEADER -->
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <div class="w-full lg:w-auto">
                 <input type="text" id="activePortoTitle" oninput="renameActivePortfolio(this.value)" 
-                    class="text-lg md:text-xl font-black text-white w-full lg:max-w-md border-b border-transparent focus:border-indigo-500/30"
-                    placeholder="Nama Portofolio...">
+                    class="text-lg md:text-xl font-black text-white w-full lg:max-w-md border-b border-transparent focus:border-indigo-500/30">
                 <p class="text-[9px] text-slate-700 font-bold tracking-[0.3em] mt-1 uppercase">Ultimate PWA v10.1 Multi</p>
             </div>
             
@@ -96,7 +91,6 @@
             </div>
         </div>
 
-        <!-- SETTINGS PANEL -->
         <div id="settingsPanel" class="hidden glass-panel p-6 rounded-2xl border-indigo-500/20">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-[10px] font-black uppercase text-indigo-400 tracking-widest">Settings & Backup</h3>
@@ -108,7 +102,6 @@
             </div>
         </div>
 
-        <!-- ASSET MANAGER HEADER -->
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-5 mt-4 bg-slate-800/30 p-5 rounded-3xl border border-white/5">
             <div>
                 <h3 class="text-[12px] font-black text-cyan-400 uppercase tracking-widest mb-1">Asset Manager</h3>
@@ -122,7 +115,6 @@
             </button>
         </div>
 
-        <!-- MAIN DATA TABLE -->
         <div class="glass-panel rounded-2xl overflow-hidden shadow-2xl relative z-10">
             <div class="overflow-x-auto custom-scroll">
                 <table class="w-full text-left border-collapse" id="assetTable">
@@ -145,8 +137,8 @@
                                 <div class="flex justify-center items-center gap-1">Action <span class="text-cyan-400 text-[8px] ml-1">▼</span></div>
                                 <select onchange="if(this.value) execSort('action', this.value); this.selectedIndex=0;" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
                                     <option value="" disabled selected></option>
-                                    <option value="buy">Prioritas BUY</option>
-                                    <option value="sell">Prioritas SELL</option>
+                                    <option value="buy">Prio BUY</option>
+                                    <option value="sell">Prio SELL</option>
                                 </select>
                             </th>
                             <th class="p-3 text-[9px] font-black uppercase bg-black/50 border-x border-white/5 min-w-[150px]">Live</th>
@@ -154,29 +146,17 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-white/5" id="tableBody"></tbody>
-                    <tfoot>
-                        <tr class="bg-black/40">
-                            <td colspan="2" class="p-4 text-[11px] font-black text-slate-600 uppercase text-right">Quota</td>
-                            <td class="p-4 text-center border-x border-white/5 bg-white/5">
-                                <div id="totalWeightDisplay" class="font-black text-sm text-white">0%</div>
-                                <div id="remainingWeightDisplay" class="text-[8px] font-bold text-cyan-400 mt-0.5 uppercase tracking-widest">Sisa: 100%</div>
-                            </td>
-                            <td colspan="6"></td>
-                        </tr>
-                    </tfoot>
                 </table>
             </div>
         </div>
 
-        <!-- AI RESULTS -->
         <div id="loadingState" class="hidden glass-panel p-8 rounded-2xl flex flex-col items-center justify-center space-y-3">
             <div class="loader"></div>
-            <p class="text-[9px] font-bold text-cyan-400 animate-pulse uppercase">Menganalisis Data Pasar...</p>
+            <p class="text-[9px] font-bold text-cyan-400 animate-pulse uppercase">Memproses Data AI...</p>
         </div>
 
         <div id="resultsDashboard" class="hidden animate-in fade-in slide-in-from-bottom-4 duration-500 mt-8 space-y-4"></div>
 
-        <!-- PROJECTIONS -->
         <div id="liveProjections" class="flex flex-row gap-3">
             <div class="glass-panel p-4 rounded-xl flex-1 border-l-2 border-[#00ff94]">
                 <span class="text-[8px] text-slate-500 font-bold uppercase block">Est. ROI</span>
@@ -188,11 +168,10 @@
             </div>
         </div>
 
-        <!-- NOTES -->
         <div class="glass-panel rounded-2xl px-3 pb-3 pt-5 border-l-4 border-slate-700">
             <textarea id="specialNotes" oninput="syncCurrentToState(); markUnsaved();" rows="6" 
                 class="w-full bg-black/20 border border-white/5 rounded-xl p-4 text-xs text-slate-300 outline-none placeholder:text-slate-600 focus:border-indigo-500/50 font-bursa transition-all"
-                placeholder="Tulis strategi investasi..."></textarea>
+                placeholder="Strategi investasi..."></textarea>
         </div>
     </div>
 
@@ -203,9 +182,8 @@
         let livePrices = {};
         let marketDataCache = {};
         let sortableInstance = null;
-        let equityChartInstance = null;
 
-        // Custom Rounding Logic: > 0.6 results in Integer, < 0.6 results in .5
+        // --- Custom Rounding Logic ---
         function customSmartRound(val) {
             if (!val || val === 0) return 0;
             const isNegative = val < 0;
@@ -229,27 +207,29 @@
                 return val.toLocaleString('id-ID', { maximumFractionDigits: 0 });
             } else {
                 const rounded = customSmartRound(val);
-                // Ensure display is always x.y format for USD
                 return rounded.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
             }
         }
 
         function parseCurrency(val, currency) {
             if (typeof val === 'number') return val;
-            const clean = String(val).replace(/[^0-9.]/g, '');
-            return parseFloat(clean) || 0;
+            let str = String(val);
+            if (currency === 'IDR') {
+                return parseFloat(str.replace(/\./g, '').replace(/,/g, '')) || 0;
+            }
+            return parseFloat(str.replace(/,/g, '')) || 0;
         }
 
         function formatCurrencyInput(el, currency) {
             let cursor = el.selectionStart;
             let oldLen = el.value.length;
-            let val = el.value.replace(/[^0-9.]/g, '');
             
             if (currency === 'IDR') {
-                let numeric = val.replace(/\./g, '');
+                let numeric = el.value.replace(/[^0-9]/g, '');
                 el.value = numeric ? parseInt(numeric).toLocaleString('id-ID') : '';
             } else {
-                el.value = val; // Direct input for decimals
+                let val = el.value.replace(/[^0-9.]/g, '');
+                el.value = val; 
             }
             let newCursor = cursor + (el.value.length - oldLen);
             el.setSelectionRange(newCursor, newCursor);
@@ -263,11 +243,8 @@
                 portfolios = JSON.parse(saved);
                 activePortfolioId = lastActive ? String(lastActive) : String(portfolios[0].id);
             } else {
-                portfolios = [{ 
-                    id: String(Date.now()), name: "PortoUtama", modal: 10000000, kurs: 16000, notes: "", 
-                    assets: [{ id: String(Date.now() + 1), name: 'BTC', weight: 50, currency: 'USD', actual: 0 }] 
-                }];
-                activePortfolioId = String(portfolios[0].id);
+                portfolios = [{ id: String(Date.now()), name: "PortoUtama", modal: 10000000, kurs: 16000, notes: "", assets: [{ id: String(Date.now() + 1), name: 'BTC', weight: 50, currency: 'USD', actual: 0 }] }];
+                activePortfolioId = portfolios[0].id;
             }
             if (!portfolios.find(p => String(p.id) === activePortfolioId)) activePortfolioId = String(portfolios[0].id);
 
@@ -293,7 +270,6 @@
         function renderTabs() {
             const container = document.getElementById('portfolioTabs');
             container.innerHTML = '';
-            
             portfolios.forEach(p => {
                 const isActive = String(p.id) === String(activePortfolioId);
                 const tabWrap = document.createElement('div');
@@ -309,10 +285,7 @@
                     const delBtn = document.createElement('div');
                     delBtn.className = 'delete-tab-btn';
                     delBtn.innerHTML = '×';
-                    delBtn.onclick = (e) => { 
-                        e.stopPropagation(); 
-                        deletePortfolioById(p.id); 
-                    };
+                    delBtn.onclick = (e) => { e.stopPropagation(); deletePortfolioById(p.id); };
                     tabWrap.appendChild(delBtn);
                 }
                 container.appendChild(tabWrap);
@@ -320,7 +293,6 @@
         }
 
         function switchPortfolio(id) {
-            if (String(id) === activePortfolioId) return;
             syncCurrentToState();
             activePortfolioId = String(id);
             localStorage.setItem('v10_last_active', activePortfolioId);
@@ -328,50 +300,33 @@
         }
 
         function deletePortfolioById(id) {
+            if (portfolios.length <= 1) return;
             const target = portfolios.find(p => String(p.id) === String(id));
-            if (!target) return;
-
-            if (confirm(`Hapus portofolio "${target.name}" secara permanen?`)) {
+            if (confirm(`Hapus portofolio "${target.name}"?`)) {
                 portfolios = portfolios.filter(p => String(p.id) !== String(id));
-                if (activePortfolioId === String(id)) {
-                    activePortfolioId = portfolios.length > 0 ? String(portfolios[0].id) : null;
-                }
+                if (activePortfolioId === String(id)) activePortfolioId = String(portfolios[0].id);
                 localStorage.setItem('v10_multi_portos', JSON.stringify(portfolios));
-                
-                if (portfolios.length === 0) {
-                    localStorage.removeItem('v10_multi_portos');
-                    initApp();
-                } else {
-                    renderTabs();
-                    loadActivePortfolio();
-                }
+                renderTabs();
+                loadActivePortfolio();
             }
         }
 
         function renameActivePortfolio(newName) {
-            const porto = portfolios.find(p => String(p.id) === String(activePortfolioId));
-            if (porto) { 
-                porto.name = newName; 
-                markUnsaved(); 
-                const activeTabSpan = document.querySelector('.tab-active span');
-                if (activeTabSpan) activeTabSpan.innerText = newName || 'Untitled';
-            }
+            const porto = portfolios.find(p => String(p.id) === activePortfolioId);
+            if (porto) { porto.name = newName; markUnsaved(); const activeTabSpan = document.querySelector('.tab-active span'); if (activeTabSpan) activeTabSpan.innerText = newName; }
         }
 
         function addNewPortfolio() {
             syncCurrentToState();
             const newId = String(Date.now());
-            portfolios.push({ 
-                id: newId, name: `Porto ${portfolios.length + 1}`, modal: 10000000, kurs: 16000, notes: "", 
-                assets: [{ id: String(Date.now() + 1), name: 'BTC', weight: 0, currency: 'USD', actual: 0 }] 
-            });
+            portfolios.push({ id: newId, name: `Porto ${portfolios.length + 1}`, modal: 10000000, kurs: 16000, notes: "", assets: [{ id: String(Date.now() + 1), name: 'BTC', weight: 0, currency: 'USD', actual: 0 }] });
             activePortfolioId = newId;
             localStorage.setItem('v10_last_active', newId);
             loadActivePortfolio();
         }
 
         function syncCurrentToState() {
-            const porto = portfolios.find(p => String(p.id) === String(activePortfolioId));
+            const porto = portfolios.find(p => String(p.id) === activePortfolioId);
             if (!porto) return;
             porto.modal = parseCurrency(document.getElementById('modalInput').value, 'IDR');
             porto.kurs = parseCurrency(document.getElementById('kursInput').value, 'IDR');
@@ -379,17 +334,11 @@
         }
 
         function markUnsaved() { isUnsaved = true; document.getElementById('unsavedDot').classList.remove('hidden'); }
-        function saveToBrowser() { 
-            syncCurrentToState(); 
-            localStorage.setItem('v10_multi_portos', JSON.stringify(portfolios)); 
-            isUnsaved = false; 
-            document.getElementById('unsavedDot').classList.add('hidden'); 
-            alert("Data Disimpan!"); 
-        }
+        function saveToBrowser() { syncCurrentToState(); localStorage.setItem('v10_multi_portos', JSON.stringify(portfolios)); isUnsaved = false; document.getElementById('unsavedDot').classList.add('hidden'); alert("Data Tersimpan!"); }
 
         function exportDataJSON() {
             syncCurrentToState();
-            const fileName = prompt("Beri nama file backup:", "Portfolio_Quant_Backup");
+            const fileName = prompt("Nama file backup:", "Portfolio_Quant_Backup");
             if (!fileName) return;
             const dataStr = JSON.stringify(portfolios, null, 2);
             const blob = new Blob([dataStr], { type: 'application/json' });
@@ -400,15 +349,13 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            URL.revokeObjectURL(url);
         }
 
         function renderTable() {
-            const porto = portfolios.find(p => String(p.id) === String(activePortfolioId));
+            const porto = portfolios.find(p => String(p.id) === activePortfolioId);
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
             if (!porto) return;
-
             porto.assets.forEach((asset, i) => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-white/5 transition-all border-b border-white/5";
@@ -444,10 +391,7 @@
             const porto = portfolios.find(p => String(p.id) === String(activePortfolioId));
             let inputVal = parseFloat(el.value) || 0;
             let othersTotal = porto.assets.reduce((sum, a, idx) => idx !== index ? sum + (a.weight || 0) : sum, 0);
-            if (inputVal + othersTotal > 100) {
-                inputVal = Math.max(0, 100 - othersTotal);
-                el.value = inputVal;
-            }
+            if (inputVal + othersTotal > 100) { inputVal = Math.max(0, 100 - othersTotal); el.value = inputVal; }
             porto.assets[index].weight = inputVal;
             updateCalculations();
             markUnsaved();
@@ -462,22 +406,19 @@
         }
 
         function updateCalculations() {
-            const porto = portfolios.find(p => String(p.id) === String(activePortfolioId));
+            const porto = portfolios.find(p => String(p.id) === activePortfolioId);
             if (!porto) return;
             const m = porto.modal || 0; const k = porto.kurs || 1; const tu = m / k;
             
-            // System Value Header
             document.getElementById('totalUsdLabel').innerText = '$ ' + customSmartRound(tu).toLocaleString('en-US', { minimumFractionDigits: 1 });
             
-            let totalWeight = porto.assets.reduce((sum, a) => sum + (a.weight || 0), 0);
-            document.getElementById('totalWeightDisplay').innerText = totalWeight.toFixed(1) + '%';
-            document.getElementById('remainingWeightDisplay').innerText = `Sisa: ${(100 - totalWeight).toFixed(1)}%`;
-
             const rows = document.getElementById('tableBody').rows;
             porto.assets.forEach((asset, i) => {
                 if (i >= rows.length) return;
                 
-                // Target Logic: IDR is % * modal, USD is % * (modal/kurs)
+                // --- Logika Kalkulasi ---
+                // IDR: % * Modal Dasar
+                // USD: % * (Modal / Kurs)
                 const targetRaw = asset.currency === 'USD' ? (tu * (asset.weight / 100)) : (m * (asset.weight / 100));
                 const target = asset.currency === 'USD' ? customSmartRound(targetRaw) : targetRaw;
                 
@@ -495,10 +436,7 @@
                 else { badge.innerText = "HOLD"; badge.className = "action-badge border text-slate-500 border-white/5"; }
                 
                 const live = livePrices[asset.name.toUpperCase()];
-                if(live) {
-                    const lPrice = live.price * (asset.currency === 'IDR' ? k : 1);
-                    rows[i].querySelector('.live-cell').innerText = prefix + formatDisplayValue(lPrice, asset.currency);
-                }
+                if(live) rows[i].querySelector('.live-cell').innerText = prefix + formatDisplayValue(live.price * (asset.currency === 'IDR' ? k : 1), asset.currency);
             });
         }
 
@@ -506,7 +444,6 @@
             const porto = portfolios.find(p => String(p.id) === String(activePortfolioId));
             if (!porto) return;
             const m = porto.modal || 0; const k = porto.kurs || 1; const tu = m / k;
-
             porto.assets.sort((a, b) => {
                 const tA = a.currency === 'USD' ? customSmartRound(tu * (a.weight / 100)) : (m * (a.weight / 100));
                 const tB = b.currency === 'USD' ? customSmartRound(tu * (b.weight / 100)) : (m * (b.weight / 100));
@@ -518,12 +455,10 @@
 
         async function runRealMarketAnalysis() {
             const porto = portfolios.find(p => String(p.id) === String(activePortfolioId));
-            if (porto.assets.reduce((sum, a) => sum + (a.weight || 0), 0) < 99) return alert("Alokasi harus 100%.");
-
+            if (porto.assets.reduce((sum, a) => sum + (a.weight || 0), 0) < 99.5) return alert("Alokasi harus tepat 100%.");
             document.getElementById('loadingState').classList.remove('hidden');
             const resDash = document.getElementById('resultsDashboard');
-            resDash.innerHTML = '';
-
+            resDash.classList.add('hidden');
             try {
                 const uniqueTickers = [...new Set(porto.assets.map(a => a.name.trim().toUpperCase()))];
                 for (let ticker of uniqueTickers) {
@@ -536,13 +471,11 @@
                         marketDataCache[ticker] = { cagr: Math.pow(closes[closes.length-1]/closes[0], 12/closes.length)-1 };
                     }
                 }
-
                 let bestWeights = porto.assets.map(() => Math.random());
                 let s = bestWeights.reduce((a,b)=>a+b, 0); bestWeights = bestWeights.map(w => (w/s)*100);
-
                 resDash.innerHTML = `<div class="glass-panel p-6 rounded-2xl"><h3 class="text-[10px] font-black text-[#00ff94] uppercase mb-4 text-center">Rekomendasi AI</h3><table class="w-full text-left"><thead><tr class="text-[8px] text-slate-500 uppercase"><th class="p-2">Asset</th><th class="p-2 text-center">User %</th><th class="p-2 text-center text-[#00ff94]">AI %</th></tr></thead><tbody class="divide-y divide-white/5">${porto.assets.map((a, idx) => `<tr><td class="p-2 font-black text-white text-xs">${a.name}</td><td class="p-2 text-center text-slate-400 text-xs">${a.weight.toFixed(1)}%</td><td class="p-2 text-center text-[#00ff94] font-black text-xs">${bestWeights[idx].toFixed(1)}%</td></tr>`).join('')}</tbody></table></div>`;
                 resDash.classList.remove('hidden');
-            } catch (e) { alert("AI Error: Gagal koneksi pasar."); } finally { document.getElementById('loadingState').classList.add('hidden'); }
+            } catch (e) { alert("AI Gagal: Cek koneksi internet."); } finally { document.getElementById('loadingState').classList.add('hidden'); }
         }
 
         async function fetchLivePricesTick() {
@@ -551,7 +484,7 @@
             const tickers = [...new Set(porto.assets.map(a => a.name.toUpperCase()))];
             for(let t of tickers) {
                 try {
-                    const symbol = t === 'BTC' ? 'BTCUSDT' : (t === 'ETH' ? 'ETHUSDT' : (t === 'SOL' ? 'SOLUSDT' : null));
+                    const symbol = t === 'BTC' ? 'BTCUSDT' : (t === 'ETH' ? 'ETHUSDT' : null);
                     if(!symbol) continue;
                     const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
                     const data = await res.json();
