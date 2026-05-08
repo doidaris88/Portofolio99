@@ -1,508 +1,268 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#0f172a">
-    
-    <title>Portfolio Pro v10.1 Multi</title>
-    
+    <title>Portfolio Pro v11.1 - Final Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
     <style>
-        body { 
-            background: radial-gradient(circle at top, #1e293b 0%, #0f172a 100%);
-            color: #f1f5f9; font-family: 'Plus Jakarta Sans', sans-serif;
-            margin: 0; min-height: 100vh; overflow-x: hidden; -webkit-tap-highlight-color: transparent;
-        }
-        .font-bursa { font-family: 'Roboto Mono', monospace; font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
-        .glass-panel { background: rgba(30, 41, 59, 0.5); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.05); }
-        
-        .tab-btn { transition: all 0.2s ease; display: flex; align-items: center; gap: 4px; border-bottom: 3px solid transparent; height: 100%; min-width: 100px; justify-content: space-between; }
-        .tab-active { background: rgba(79, 70, 229, 0.2); border-bottom-color: #6366f1; color: white; }
-        .tab-inactive { color: #64748b; }
-        .tab-inactive:hover { background: rgba(255, 255, 255, 0.05); }
-        
-        .delete-tab-btn { 
-            display: flex; align-items: center; justify-content: center;
-            width: 28px; height: 28px; border-radius: 6px;
-            font-size: 18px; line-height: 1; opacity: 0.3;
-            transition: all 0.2s; cursor: pointer; color: #94a3b8;
-        }
-        .delete-tab-btn:hover { opacity: 1; background: rgba(244, 63, 94, 0.2); color: #f43f5e; }
-
-        .drag-handle { cursor: grab; padding: 10px; color: #475569; display: flex; align-items: center; justify-content: center; touch-action: none; }
-        .action-badge { font-weight: 800; font-size: 9px; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; }
-        .loader { border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid #22d3ee; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        .custom-scroll::-webkit-scrollbar { height: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-        
-        input { background: transparent; outline: none; border: none; }
+        body { background-color: #ffffff; color: #334155; font-family: 'Plus Jakarta Sans', sans-serif; min-height: 100vh; }
+        .font-mono { font-family: 'Roboto Mono', monospace; font-variant-numeric: tabular-nums; }
+        .glass-panel { background: #f8fafc; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); }
+        .tab-active { background: white; border-bottom: 3px solid #6366f1; color: #1e293b; font-weight: 800; }
+        .tab-inactive { color: #94a3b8; border-bottom: 3px solid transparent; }
+        input { background: transparent; outline: none; border: none; color: #1e293b; width: 100%; }
+        th { background-color: #f1f5f9; color: #64748b; font-size: 9px; font-weight: 900; text-transform: uppercase; padding: 12px 8px; }
+        .currency-switch { font-size: 8px; font-weight: 900; padding: 2px 6px; border-radius: 4px; cursor: pointer; user-select: none; }
+        .idr-mode { background: #e0f2fe; color: #0369a1; }
+        .usd-mode { background: #fef3c7; color: #92400e; }
+        .dropdown-icon { color: #6366f1; font-size: 10px; cursor: pointer; background: transparent; outline: none; border: none; }
     </style>
 </head>
 <body class="p-0">
 
-    <nav class="w-full bg-slate-900/80 backdrop-blur-xl border-b border-white/5 sticky top-0 z-50">
-        <div class="max-w-[1400px] mx-auto flex items-center overflow-x-auto custom-scroll px-2">
+    <nav class="w-full bg-slate-50 border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-[1400px] mx-auto flex items-center overflow-x-auto px-2">
             <div id="portfolioTabs" class="flex items-center h-12"></div>
-            <button onclick="addNewPortfolio()" class="px-5 py-3 text-slate-500 hover:text-cyan-400 text-xl font-bold transition-all">+</button>
+            <button onclick="addNewTab()" class="px-5 py-3 text-slate-400 hover:text-indigo-600 text-xl font-bold">+</button>
         </div>
     </nav>
 
     <div class="max-w-[1400px] mx-auto space-y-6 pb-20 p-4 sm:p-6"> 
         
-        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-            <div class="w-full lg:w-auto">
-                <input type="text" id="activePortoTitle" oninput="renameActivePortfolio(this.value)" 
-                    class="text-lg md:text-xl font-black text-white w-full lg:max-w-md border-b border-transparent focus:border-indigo-500/30">
-                <p class="text-[9px] text-slate-700 font-bold tracking-[0.3em] mt-1 uppercase">Ultimate PWA v10.1 Multi</p>
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 items-start">
+            <div class="lg:col-span-1">
+                <input type="text" id="activePortoTitle" class="text-xl font-black text-slate-800 border-b border-slate-200" oninput="saveTextOnly('title', this.value)">
+                <p class="text-[9px] text-slate-400 font-bold tracking-[0.3em] mt-1 uppercase">Ultimate PWA v11.1</p>
             </div>
-            
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 w-full lg:w-auto">
-                <div class="glass-panel p-3 rounded-xl col-span-2 sm:col-span-1 border-l-2 border-cyan-500">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 lg:col-span-3">
+                <div class="glass-panel p-3 rounded-xl border-l-2 border-slate-400">
                     <span class="text-[8px] text-slate-500 font-black uppercase mb-0.5 block">Modal Dasar (IDR)</span>
-                    <input type="text" id="modalInput" oninput="formatCurrencyInput(this, 'IDR'); syncCurrentToState(); updateCalculations();" class="text-base font-extrabold w-full text-white">
+                    <input type="text" id="modalInput" class="text-base font-extrabold font-mono" oninput="formatAndSave(this, 'modal')">
                 </div>
-                
-                <div class="glass-panel p-3 rounded-xl col-span-2 sm:col-span-1 relative border-l-2 border-amber-500">
-                    <span class="text-[8px] text-slate-500 font-black uppercase mb-0.5 block">Exchange USD (Manual)</span>
-                    <input type="text" id="kursInput" oninput="formatCurrencyInput(this, 'IDR'); syncCurrentToState(); updateCalculations();" class="text-base font-extrabold w-full text-white">
+                <div class="glass-panel p-3 rounded-xl border-l-2 border-amber-500">
+                    <span class="text-[8px] text-slate-500 font-black uppercase mb-0.5 block">Kurs USD (Manual)</span>
+                    <input type="text" id="kursInput" class="text-base font-extrabold font-mono" oninput="formatAndSave(this, 'kurs')">
                 </div>
-                
-                <div class="bg-indigo-600 p-3 rounded-xl flex flex-col justify-center col-span-2 sm:col-span-1 shadow-lg">
-                    <span class="text-[8px] font-bold uppercase mb-0.5 text-indigo-200">System Value (USD)</span>
-                    <h3 id="totalUsdLabel" class="text-lg font-black tracking-tighter text-white font-bursa">$ 0</h3>
+                <div class="bg-indigo-600 p-3 rounded-xl shadow-lg flex flex-col justify-center">
+                    <span class="text-[8px] text-indigo-200 font-black uppercase mb-0.5 block">System Value (USD)</span>
+                    <span id="systemValueLabel" class="text-lg font-black text-white font-mono">$ 0.00</span>
                 </div>
-                
-                <button onclick="toggleSettings()" class="bg-slate-800 p-3 rounded-xl hover:bg-slate-700 transition-all border border-white/5 relative col-span-2 sm:col-span-1">
-                    <span class="text-white text-base">⚙️ Backup</span>
-                    <span id="unsavedDot" class="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full hidden"></span>
-                </button>
             </div>
         </div>
 
-        <div id="settingsPanel" class="hidden glass-panel p-6 rounded-2xl border-indigo-500/20">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-[10px] font-black uppercase text-indigo-400 tracking-widest">Settings & Backup</h3>
-                <button onclick="toggleSettings()" class="text-slate-500 text-xl">✕</button>
-            </div>
-            <div class="flex gap-2">
-                <button onclick="saveToBrowser()" class="bg-indigo-600 text-white px-4 py-3 rounded-xl font-black text-[10px] uppercase flex-1 shadow-lg">Simpan Memory</button>
-                <button onclick="exportDataJSON()" class="bg-slate-700 text-white px-4 py-3 rounded-xl font-black text-[10px] uppercase flex-1">Export JSON</button>
-            </div>
-        </div>
-
-        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-5 mt-4 bg-slate-800/30 p-5 rounded-3xl border border-white/5">
-            <div>
-                <h3 class="text-[12px] font-black text-cyan-400 uppercase tracking-widest mb-1">Asset Manager</h3>
-                <div class="flex gap-2 mt-3">
-                    <button onclick="addAsset()" class="bg-white/5 border border-white/10 px-4 py-2 rounded-xl font-bold text-[10px] text-cyan-400 uppercase">+ Aset</button>
-                    <button onclick="autoRebalance()" class="bg-white/5 border border-white/10 px-4 py-2 rounded-xl font-bold text-[10px] text-white uppercase">🔄 Rebalance</button>
-                </div>
-            </div>
-            <button onclick="runRealMarketAnalysis()" class="w-full lg:w-auto bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(79,70,229,0.4)] group">
-                <span id="aiBtnText" class="group-hover:animate-pulse">▶ RUN REAL-TIME AI</span>
-            </button>
-        </div>
-
-        <div class="glass-panel rounded-2xl overflow-hidden shadow-2xl relative z-10">
-            <div class="overflow-x-auto custom-scroll">
-                <table class="w-full text-left border-collapse" id="assetTable">
+        <div class="glass-panel rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="bg-black/30 border-b border-white/5 text-slate-500">
-                            <th class="p-3 text-center w-10">#</th>
-                            <th class="p-3 text-[9px] font-black uppercase min-w-[120px]">Asset</th>
-                            <th class="p-3 text-[9px] font-black uppercase text-center bg-white/5 min-w-[80px] relative">
-                                <div class="flex justify-center items-center gap-1">% Alloc <span class="text-cyan-400 text-[8px] ml-1">▼</span></div>
-                                <select onchange="if(this.value) execSort('weight', this.value); this.selectedIndex=0;" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-                                    <option value="" disabled selected></option>
-                                    <option value="desc">Tinggi - Rendah</option>
-                                    <option value="asc">Rendah - Tinggi</option>
+                        <tr class="border-b border-slate-200">
+                            <th class="text-center w-10">#</th>
+                            <th class="min-w-[150px]">Asset Name</th>
+                            <th class="text-center bg-slate-100/50 w-28">
+                                % Weight 
+                                <select onchange="handleSort(this.value)" class="dropdown-icon">
+                                    <option value="">▼</option>
+                                    <option value="high">High-Low</option>
+                                    <option value="low">Low-High</option>
                                 </select>
                             </th>
-                            <th class="p-3 text-[9px] font-black uppercase text-center min-w-[120px]">Target</th>
-                            <th class="p-3 text-[9px] font-black uppercase min-w-[150px]">Actual Size</th>
-                            <th class="p-3 text-[9px] font-black uppercase text-right min-w-[110px]">Diff</th>
-                            <th class="p-3 text-[9px] font-black uppercase text-center bg-white/5 min-w-[80px] relative">
-                                <div class="flex justify-center items-center gap-1">Action <span class="text-cyan-400 text-[8px] ml-1">▼</span></div>
-                                <select onchange="if(this.value) execSort('action', this.value); this.selectedIndex=0;" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-                                    <option value="" disabled selected></option>
+                            <th class="text-center min-w-[120px]">Target</th>
+                            <th class="text-right min-w-[140px]">Actual Size</th>
+                            <th class="text-right min-w-[140px]">Profit Murni</th>
+                            <th class="text-center bg-indigo-50 min-w-[150px]">
+                                Action 
+                                <select onchange="handleFilterAction(this.value)" class="dropdown-icon">
+                                    <option value="">▼</option>
                                     <option value="buy">Prio BUY</option>
                                     <option value="sell">Prio SELL</option>
                                 </select>
                             </th>
-                            <th class="p-3 text-[9px] font-black uppercase bg-black/50 border-x border-white/5 min-w-[150px]">Live</th>
-                            <th class="p-3 text-center w-12 border-l border-white/5">DRAG</th>
+                            <th class="text-right min-w-[120px]">Nominal Jual (30%)</th>
+                            <th class="text-center w-12 border-l border-slate-100">Del</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-white/5" id="tableBody"></tbody>
+                    <tbody class="divide-y divide-slate-100 font-mono text-[11px]" id="assetTableBody"></tbody>
                 </table>
             </div>
+            <button onclick="addRow()" class="w-full p-4 text-[9px] font-black text-slate-400 hover:text-indigo-600 hover:bg-slate-50 uppercase tracking-widest transition-all">+ Add Asset Item</button>
         </div>
 
-        <div id="loadingState" class="hidden glass-panel p-8 rounded-2xl flex flex-col items-center justify-center space-y-3">
-            <div class="loader"></div>
-            <p class="text-[9px] font-bold text-cyan-400 animate-pulse uppercase">Memproses Data AI...</p>
-        </div>
-
-        <div id="resultsDashboard" class="hidden animate-in fade-in slide-in-from-bottom-4 duration-500 mt-8 space-y-4"></div>
-
-        <div id="liveProjections" class="flex flex-row gap-3">
-            <div class="glass-panel p-4 rounded-xl flex-1 border-l-2 border-[#00ff94]">
-                <span class="text-[8px] text-slate-500 font-bold uppercase block">Est. ROI</span>
-                <span id="liveROI" class="text-lg font-black text-white block">0.0%</span>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="glass-panel p-4 rounded-xl border-l-4 border-emerald-500 bg-emerald-50/30">
+                <div class="flex justify-between items-start mb-1">
+                    <span class="text-[8px] text-emerald-700 font-black uppercase">Total Harvested Profit</span>
+                    <button onclick="togglePanelCurrency('total')" id="cur_total" class="currency-switch idr-mode">IDR</button>
+                </div>
+                <span id="totalProfitLabel" class="text-lg font-black text-emerald-600">Rp 0</span>
             </div>
-            <div class="glass-panel p-4 rounded-xl flex-1 border-l-2 border-rose-500">
-                <span class="text-[8px] text-slate-500 font-bold uppercase block">Est. Drawdown</span>
-                <span id="liveDD" class="text-lg font-black text-white block">0.0%</span>
+            <div class="glass-panel p-4 rounded-xl border-l-4 border-rose-500 bg-rose-50/30">
+                <div class="flex justify-between items-start mb-1">
+                    <div class="flex items-center gap-1">
+                        <span class="text-[8px] text-rose-700 font-black uppercase">Cash Alloc</span>
+                        <div class="text-[10px] font-bold text-rose-600">(<input type="number" id="percCash" class="w-5 text-right bg-transparent p-0" value="20" oninput="updateSummaries()">%)</div>
+                    </div>
+                    <button onclick="togglePanelCurrency('cash')" id="cur_cash" class="currency-switch idr-mode">IDR</button>
+                </div>
+                <span id="cashAllocLabel" class="text-lg font-black text-rose-600 block">Rp 0</span>
+            </div>
+            <div class="glass-panel p-4 rounded-xl border-l-4 border-indigo-500">
+                <div class="flex items-center justify-between mb-1">
+                    <div class="flex items-center gap-1">
+                        <span class="text-[8px] text-slate-500 font-black uppercase">Dist. Core</span>
+                        <div class="text-[10px] font-bold text-indigo-600">(<input type="number" id="percCore" class="w-5 text-right bg-transparent p-0" value="40" oninput="updateSummaries()">%)</div>
+                    </div>
+                    <button onclick="togglePanelCurrency('core')" id="cur_core" class="currency-switch idr-mode">IDR</button>
+                </div>
+                <span id="distCoreLabel" class="text-lg font-black text-slate-700 block">Rp 0</span>
+            </div>
+            <div class="glass-panel p-4 rounded-xl border-l-4 border-slate-400">
+                <div class="flex items-center justify-between mb-1">
+                    <div class="flex items-center gap-1">
+                        <span class="text-[8px] text-slate-500 font-black uppercase">Dist. Defense</span>
+                        <div class="text-[10px] font-bold text-slate-500">(<input type="number" id="percDef" class="w-5 text-right bg-transparent p-0" value="40" oninput="updateSummaries()">%)</div>
+                    </div>
+                    <button onclick="togglePanelCurrency('def')" id="cur_def" class="currency-switch idr-mode">IDR</button>
+                </div>
+                <span id="distDefLabel" class="text-lg font-black text-slate-700 block">Rp 0</span>
             </div>
         </div>
 
         <div class="glass-panel rounded-2xl px-3 pb-3 pt-5 border-l-4 border-slate-700">
-            <textarea id="specialNotes" oninput="syncCurrentToState(); markUnsaved();" rows="6" 
-                class="w-full bg-black/20 border border-white/5 rounded-xl p-4 text-xs text-slate-300 outline-none placeholder:text-slate-600 focus:border-indigo-500/50 font-bursa transition-all"
-                placeholder="Strategi investasi..."></textarea>
+            <textarea id="specialNotes" rows="6" class="w-full bg-black/5 border border-slate-100 rounded-xl p-4 text-xs text-slate-600 outline-none placeholder:text-slate-400 focus:border-indigo-300 font-mono transition-all" placeholder="Strategi investasi..." oninput="saveTextOnly('notes', this.value)"></textarea>
         </div>
     </div>
 
     <script>
-        let portfolios = [];
-        let activePortfolioId = null;
-        let isUnsaved = false;
-        let livePrices = {};
-        let marketDataCache = {};
-        let sortableInstance = null;
+        let state = JSON.parse(localStorage.getItem('portoV11_final_stable')) || {
+            activeTabIndex: 0,
+            panelCurrencies: { total: 'IDR', cash: 'IDR', core: 'IDR', def: 'IDR' },
+            tabs: [{ title: "PORTFOLIO 1", modal: 0, kurs: 16000, notes: "", assets: [] }]
+        };
 
-        // --- Custom Rounding Logic ---
-        function customSmartRound(val) {
-            if (!val || val === 0) return 0;
-            const isNegative = val < 0;
-            const absVal = Math.abs(val);
-            const integerPart = Math.floor(absVal);
-            const decimalPart = absVal - integerPart;
+        const formatIDR = (n) => Math.round(n || 0).toLocaleString('id-ID');
+        const formatUSD = (n) => (n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-            let result;
-            if (decimalPart === 0) {
-                result = integerPart;
-            } else if (decimalPart > 0.6) {
-                result = integerPart + 1;
-            } else {
-                result = integerPart + 0.5;
-            }
-            return isNegative ? -result : result;
+        function togglePanelCurrency(panel) {
+            state.panelCurrencies[panel] = state.panelCurrencies[panel] === 'IDR' ? 'USD' : 'IDR';
+            saveToStorage();
+            updateSummaries();
         }
 
-        function formatDisplayValue(val, currency) {
-            if (currency === 'IDR') {
-                return val.toLocaleString('id-ID', { maximumFractionDigits: 0 });
-            } else {
-                const rounded = customSmartRound(val);
-                return rounded.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-            }
-        }
-
-        function parseCurrency(val, currency) {
-            if (typeof val === 'number') return val;
-            let str = String(val);
-            if (currency === 'IDR') {
-                return parseFloat(str.replace(/\./g, '').replace(/,/g, '')) || 0;
-            }
-            return parseFloat(str.replace(/,/g, '')) || 0;
-        }
-
-        function formatCurrencyInput(el, currency) {
+        function formatAndSave(el, field, assetIdx = null, assetField = null) {
             let cursor = el.selectionStart;
             let oldLen = el.value.length;
-            
-            if (currency === 'IDR') {
-                let numeric = el.value.replace(/[^0-9]/g, '');
-                el.value = numeric ? parseInt(numeric).toLocaleString('id-ID') : '';
-            } else {
-                let val = el.value.replace(/[^0-9.]/g, '');
-                el.value = val; 
-            }
-            let newCursor = cursor + (el.value.length - oldLen);
-            el.setSelectionRange(newCursor, newCursor);
+            let raw = el.value.replace(/\D/g, "");
+            let val = raw ? parseInt(raw, 10) : 0;
+            if (assetIdx !== null) state.tabs[state.activeTabIndex].assets[assetIdx][assetField] = val;
+            else state.tabs[state.activeTabIndex][field] = val;
+            el.value = val ? val.toLocaleString('id-ID') : "";
+            let newLen = el.value.length;
+            el.setSelectionRange(cursor + (newLen - oldLen), cursor + (newLen - oldLen));
+            saveToStorage();
+            updateSummaries(); 
         }
 
-        function initApp() {
-            const saved = localStorage.getItem('v10_multi_portos');
-            const lastActive = localStorage.getItem('v10_last_active');
-            
-            if (saved && JSON.parse(saved).length > 0) {
-                portfolios = JSON.parse(saved);
-                activePortfolioId = lastActive ? String(lastActive) : String(portfolios[0].id);
-            } else {
-                portfolios = [{ id: String(Date.now()), name: "PortoUtama", modal: 10000000, kurs: 16000, notes: "", assets: [{ id: String(Date.now() + 1), name: 'BTC', weight: 50, currency: 'USD', actual: 0 }] }];
-                activePortfolioId = portfolios[0].id;
-            }
-            if (!portfolios.find(p => String(p.id) === activePortfolioId)) activePortfolioId = String(portfolios[0].id);
-
-            renderTabs();
-            loadActivePortfolio();
-            setInterval(fetchLivePricesTick, 10000);
+        function handleWeightInput(idx, val) {
+            let tab = state.tabs[state.activeTabIndex];
+            let others = tab.assets.reduce((s, a, i) => i === idx ? s : s + (parseFloat(a.weight) || 0), 0);
+            tab.assets[idx].weight = Math.min(parseFloat(val || 0), 100 - others);
+            saveToStorage();
+            updateSummaries();
         }
 
-        function loadActivePortfolio() {
-            const porto = portfolios.find(p => String(p.id) === String(activePortfolioId));
-            if (!porto) return;
-
-            document.getElementById('modalInput').value = (porto.modal || 0).toLocaleString('id-ID');
-            document.getElementById('kursInput').value = (porto.kurs || 0).toLocaleString('id-ID');
-            document.getElementById('specialNotes').value = porto.notes || "";
-            document.getElementById('activePortoTitle').value = porto.name;
-            document.getElementById('resultsDashboard').classList.add('hidden');
+        function updateSummaries() {
+            const tab = state.tabs[state.activeTabIndex];
+            const kurs = tab.kurs || 1;
+            document.getElementById('systemValueLabel').innerText = "$ " + formatUSD(tab.modal / kurs);
             
-            renderTable();
-            renderTabs();
-        }
+            let totalHarvestedIDR = 0;
+            tab.assets.forEach((asset, idx) => {
+                const isUSD = asset.currency === 'USD';
+                const targetNominal = (asset.weight / 100) * tab.modal;
+                const targetInCurrency = isUSD ? (targetNominal / kurs) : targetNominal;
+                const profitMurni = asset.actual - targetInCurrency;
+                asset.profit = profitMurni;
 
-        function renderTabs() {
-            const container = document.getElementById('portfolioTabs');
-            container.innerHTML = '';
-            portfolios.forEach(p => {
-                const isActive = String(p.id) === String(activePortfolioId);
-                const tabWrap = document.createElement('div');
-                tabWrap.className = `tab-btn px-4 cursor-pointer border-r border-white/5 ${isActive ? 'tab-active' : 'tab-inactive'}`;
-                
-                const nameLabel = document.createElement('span');
-                nameLabel.className = "py-3 text-[9px] font-black uppercase whitespace-nowrap overflow-hidden text-ellipsis max-w-[100px]";
-                nameLabel.innerText = p.name || 'Untitled';
-                nameLabel.onclick = () => switchPortfolio(p.id);
-                tabWrap.appendChild(nameLabel);
+                // Logika Kunci 30% dari profit murni
+                const nominalJual = profitMurni > 0 ? (0.30 * profitMurni) : 0;
+                totalHarvestedIDR += isUSD ? (nominalJual * kurs) : nominalJual;
 
-                if (portfolios.length > 1) {
-                    const delBtn = document.createElement('div');
-                    delBtn.className = 'delete-tab-btn';
-                    delBtn.innerHTML = '×';
-                    delBtn.onclick = (e) => { e.stopPropagation(); deletePortfolioById(p.id); };
-                    tabWrap.appendChild(delBtn);
+                const row = document.querySelector(`tr[data-idx="${idx}"]`);
+                if (row) {
+                    row.querySelector('.target-cell').innerText = isUSD ? '$'+formatUSD(targetInCurrency) : 'Rp'+formatIDR(targetNominal);
+                    const pCell = row.querySelector('.profit-cell');
+                    pCell.innerText = isUSD ? formatUSD(profitMurni) : formatIDR(profitMurni);
+                    pCell.className = `p-3 text-right font-bold profit-cell ${profitMurni >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
+                    
+                    const actualIDR = isUSD ? asset.actual * kurs : asset.actual;
+                    const diffIDR = targetNominal - actualIDR;
+                    const aCell = row.querySelector('.action-cell');
+                    if (diffIDR > 500) aCell.innerHTML = `<span class="text-emerald-600 font-bold">BUY: ${isUSD ? '$'+formatUSD(diffIDR/kurs) : 'Rp'+formatIDR(diffIDR)}</span>`;
+                    else if (diffIDR < -500) aCell.innerHTML = `<span class="text-rose-500 font-bold">SELL: ${isUSD ? '$'+formatUSD(Math.abs(diffIDR)/kurs) : 'Rp'+formatIDR(Math.abs(diffIDR))}</span>`;
+                    else aCell.innerHTML = '<span class="text-slate-400">HOLD</span>';
+                    row.querySelector('.sell-cell').innerText = isUSD ? '$'+formatUSD(nominalJual) : 'Rp'+formatIDR(nominalJual);
                 }
-                container.appendChild(tabWrap);
+            });
+
+            const pValues = {
+                total: totalHarvestedIDR,
+                cash: totalHarvestedIDR * (parseFloat(document.getElementById('percCash').value) / 100),
+                remaining: totalHarvestedIDR - (totalHarvestedIDR * (parseFloat(document.getElementById('percCash').value) / 100))
+            };
+            const pWeights = { core: parseFloat(document.getElementById('percCore').value), def: parseFloat(document.getElementById('percDef').value) };
+            pValues.core = pValues.remaining * (pWeights.core / (pWeights.core + pWeights.def || 1));
+            pValues.def = pValues.remaining * (pWeights.def / (pWeights.core + pWeights.def || 1));
+
+            document.getElementById('totalProfitLabel').innerText = state.panelCurrencies.total === 'USD' ? "$ " + formatUSD(pValues.total / kurs) : "Rp " + formatIDR(pValues.total);
+            document.getElementById('cashAllocLabel').innerText = state.panelCurrencies.cash === 'USD' ? "$ " + formatUSD(pValues.cash / kurs) : "Rp " + formatIDR(pValues.cash);
+            document.getElementById('distCoreLabel').innerText = state.panelCurrencies.core === 'USD' ? "$ " + formatUSD(pValues.core / kurs) : "Rp " + formatIDR(pValues.core);
+            document.getElementById('distDefLabel').innerText = state.panelCurrencies.def === 'USD' ? "$ " + formatUSD(pValues.def / kurs) : "Rp " + formatIDR(pValues.def);
+            
+            ['total', 'cash', 'core', 'def'].forEach(p => {
+                const btn = document.getElementById(`cur_${p}`);
+                btn.innerText = state.panelCurrencies[p];
+                btn.className = `currency-switch ${state.panelCurrencies[p] === 'USD' ? 'usd-mode' : 'idr-mode'}`;
             });
         }
 
-        function switchPortfolio(id) {
-            syncCurrentToState();
-            activePortfolioId = String(id);
-            localStorage.setItem('v10_last_active', activePortfolioId);
-            loadActivePortfolio();
-        }
-
-        function deletePortfolioById(id) {
-            if (portfolios.length <= 1) return;
-            const target = portfolios.find(p => String(p.id) === String(id));
-            if (confirm(`Hapus portofolio "${target.name}"?`)) {
-                portfolios = portfolios.filter(p => String(p.id) !== String(id));
-                if (activePortfolioId === String(id)) activePortfolioId = String(portfolios[0].id);
-                localStorage.setItem('v10_multi_portos', JSON.stringify(portfolios));
-                renderTabs();
-                loadActivePortfolio();
-            }
-        }
-
-        function renameActivePortfolio(newName) {
-            const porto = portfolios.find(p => String(p.id) === activePortfolioId);
-            if (porto) { porto.name = newName; markUnsaved(); const activeTabSpan = document.querySelector('.tab-active span'); if (activeTabSpan) activeTabSpan.innerText = newName; }
-        }
-
-        function addNewPortfolio() {
-            syncCurrentToState();
-            const newId = String(Date.now());
-            portfolios.push({ id: newId, name: `Porto ${portfolios.length + 1}`, modal: 10000000, kurs: 16000, notes: "", assets: [{ id: String(Date.now() + 1), name: 'BTC', weight: 0, currency: 'USD', actual: 0 }] });
-            activePortfolioId = newId;
-            localStorage.setItem('v10_last_active', newId);
-            loadActivePortfolio();
-        }
-
-        function syncCurrentToState() {
-            const porto = portfolios.find(p => String(p.id) === activePortfolioId);
-            if (!porto) return;
-            porto.modal = parseCurrency(document.getElementById('modalInput').value, 'IDR');
-            porto.kurs = parseCurrency(document.getElementById('kursInput').value, 'IDR');
-            porto.notes = document.getElementById('specialNotes').value;
-        }
-
-        function markUnsaved() { isUnsaved = true; document.getElementById('unsavedDot').classList.remove('hidden'); }
-        function saveToBrowser() { syncCurrentToState(); localStorage.setItem('v10_multi_portos', JSON.stringify(portfolios)); isUnsaved = false; document.getElementById('unsavedDot').classList.add('hidden'); alert("Data Tersimpan!"); }
-
-        function exportDataJSON() {
-            syncCurrentToState();
-            const fileName = prompt("Nama file backup:", "Portfolio_Quant_Backup");
-            if (!fileName) return;
-            const dataStr = JSON.stringify(portfolios, null, 2);
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = fileName + ".json";
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        function renderTable() {
-            const porto = portfolios.find(p => String(p.id) === activePortfolioId);
-            const tbody = document.getElementById('tableBody');
+        function render() {
+            const tab = state.tabs[state.activeTabIndex];
+            const tbody = document.getElementById('assetTableBody');
             tbody.innerHTML = '';
-            if (!porto) return;
-            porto.assets.forEach((asset, i) => {
+            tab.assets.forEach((asset, idx) => {
+                const isUSD = asset.currency === 'USD';
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-white/5 transition-all border-b border-white/5";
-                tr.setAttribute('data-id', asset.id);
-                const isIDR = asset.currency === 'IDR';
-                tr.innerHTML = `
-                    <td class="p-3 text-center border-r border-white/5"><button onclick="deleteAsset(${i})" class="text-slate-600 hover:text-rose-500 text-lg">🗑️</button></td>
-                    <td class="p-3 min-w-[120px]">
-                        <input oninput="updateAssetField(${i}, 'name', this.value)" value="${asset.name}" class="font-bold text-white text-xs bg-transparent w-full uppercase">
-                        <button onclick="toggleCurrency(${i})" class="block text-[8px] text-slate-500 uppercase mt-1">Bas: ${asset.currency}</button>
-                    </td>
-                    <td class="p-3 text-center bg-white/5 min-w-[80px]">
-                        <input type="number" oninput="updateWeightInstantly(${i}, this)" value="${asset.weight}" class="bg-transparent text-center font-black text-cyan-400 text-xs w-full weight-input">
-                    </td>
-                    <td class="p-4 text-xs font-bold text-slate-500 text-center min-w-[120px] target-cell">--</td>
-                    <td class="p-3 min-w-[150px]">
-                        <input type="text" oninput="formatCurrencyInput(this, '${asset.currency}'); updateAssetField(${i}, 'actual', this.value)" 
-                            value="${asset.actual ? (isIDR?asset.actual.toLocaleString('id-ID'):asset.actual.toLocaleString('en-US')):''}" 
-                            class="bg-black/30 border border-white/10 rounded p-2 w-full text-xs font-extrabold text-white">
-                    </td>
-                    <td class="p-4 text-xs font-black text-right min-w-[110px] diff-cell">--</td>
-                    <td class="p-3 text-center min-w-[80px] bg-white/5 action-cell"><span class="action-badge border">HOLD</span></td>
-                    <td class="p-3 bg-black/20 font-bursa font-bold text-[10px] text-center min-w-[150px] live-cell">...</td>
-                    <td class="p-3 border-l border-white/5"><div class="drag-handle">⋮⋮</div></td>
-                `;
+                tr.setAttribute('data-idx', idx);
+                tr.className = "hover:bg-slate-50 border-b border-slate-100";
+                tr.innerHTML = `<td class="p-3 text-center text-slate-400">${idx + 1}</td>
+                    <td class="p-3"><div class="flex items-center gap-2"><input type="text" value="${asset.name}" class="font-bold uppercase" oninput="state.tabs[state.activeTabIndex].assets[${idx}].name=this.value.toUpperCase(); saveToStorage()"><span onclick="toggleCurrency(${idx})" class="currency-switch ${isUSD?'usd-mode':'idr-mode'}">${asset.currency}</span></div></td>
+                    <td class="p-3 bg-slate-100/50"><input type="number" value="${asset.weight || 0}" class="text-center font-black text-indigo-600" oninput="handleWeightInput(${idx}, this.value)"></td>
+                    <td class="p-3 text-center text-slate-500 font-bold target-cell">-</td>
+                    <td class="p-3 text-right"><input type="text" value="${isUSD ? asset.actual : formatIDR(asset.actual)}" class="text-right" oninput="${isUSD ? 'handleUsdInput' : 'formatAndSave'}(this, null, ${idx}, 'actual')"></td>
+                    <td class="p-3 text-right font-bold profit-cell">-</td>
+                    <td class="p-3 text-center bg-indigo-50/30 font-bold action-cell">-</td>
+                    <td class="p-3 text-right text-rose-500 font-bold sell-cell">-</td>
+                    <td class="p-3 text-center border-l border-slate-100 cursor-pointer text-slate-300 hover:text-rose-500" onclick="deleteRow(${idx})">🗑️</td>`;
                 tbody.appendChild(tr);
             });
-            updateCalculations();
-            initSortable();
+            updateSummaries(); renderTabs();
         }
 
-        function updateWeightInstantly(index, el) {
-            const porto = portfolios.find(p => String(p.id) === String(activePortfolioId));
-            let inputVal = parseFloat(el.value) || 0;
-            let othersTotal = porto.assets.reduce((sum, a, idx) => idx !== index ? sum + (a.weight || 0) : sum, 0);
-            if (inputVal + othersTotal > 100) { inputVal = Math.max(0, 100 - othersTotal); el.value = inputVal; }
-            porto.assets[index].weight = inputVal;
-            updateCalculations();
-            markUnsaved();
-        }
-
-        function updateAssetField(index, field, value) {
-            const porto = portfolios.find(p => String(p.id) === String(activePortfolioId));
-            if (field === 'actual') porto.assets[index].actual = parseCurrency(value, porto.assets[index].currency);
-            else porto.assets[index][field] = value.toUpperCase();
-            updateCalculations();
-            markUnsaved();
-        }
-
-        function updateCalculations() {
-            const porto = portfolios.find(p => String(p.id) === activePortfolioId);
-            if (!porto) return;
-            const m = porto.modal || 0; const k = porto.kurs || 1; const tu = m / k;
-            
-            document.getElementById('totalUsdLabel').innerText = '$ ' + customSmartRound(tu).toLocaleString('en-US', { minimumFractionDigits: 1 });
-            
-            const rows = document.getElementById('tableBody').rows;
-            porto.assets.forEach((asset, i) => {
-                if (i >= rows.length) return;
-                
-                // --- Logika Kalkulasi ---
-                // IDR: % * Modal Dasar
-                // USD: % * (Modal / Kurs)
-                const targetRaw = asset.currency === 'USD' ? (tu * (asset.weight / 100)) : (m * (asset.weight / 100));
-                const target = asset.currency === 'USD' ? customSmartRound(targetRaw) : targetRaw;
-                
-                const diff = asset.actual - target;
-                const prefix = asset.currency === 'USD' ? '$' : 'Rp';
-                
-                rows[i].querySelector('.target-cell').innerText = prefix + formatDisplayValue(target, asset.currency);
-                const dCell = rows[i].querySelector('.diff-cell');
-                dCell.innerText = (diff > 0 ? "+" : "") + formatDisplayValue(diff, asset.currency);
-                dCell.className = `p-4 text-xs font-black text-right min-w-[110px] diff-cell ${diff < -1 ? 'text-rose-400' : (diff > 1 ? 'text-emerald-400' : 'text-slate-500')}`;
-
-                const badge = rows[i].querySelector('.action-badge');
-                if (diff < -1) { badge.innerText = "BUY"; badge.className = "action-badge border text-emerald-400 border-emerald-500/20 bg-emerald-500/5"; }
-                else if (diff > 1) { badge.innerText = "SELL"; badge.className = "action-badge border text-rose-400 border-rose-500/20 bg-rose-500/5"; }
-                else { badge.innerText = "HOLD"; badge.className = "action-badge border text-slate-500 border-white/5"; }
-                
-                const live = livePrices[asset.name.toUpperCase()];
-                if(live) rows[i].querySelector('.live-cell').innerText = prefix + formatDisplayValue(live.price * (asset.currency === 'IDR' ? k : 1), asset.currency);
-            });
-        }
-
-        function execSort(type, direction) {
-            const porto = portfolios.find(p => String(p.id) === String(activePortfolioId));
-            if (!porto) return;
-            const m = porto.modal || 0; const k = porto.kurs || 1; const tu = m / k;
-            porto.assets.sort((a, b) => {
-                const tA = a.currency === 'USD' ? customSmartRound(tu * (a.weight / 100)) : (m * (a.weight / 100));
-                const tB = b.currency === 'USD' ? customSmartRound(tu * (b.weight / 100)) : (m * (b.weight / 100));
-                if (type === 'weight') return direction === 'desc' ? b.weight - a.weight : a.weight - b.weight;
-                return direction === 'buy' ? (a.actual - tA) - (b.actual - tB) : (b.actual - tB) - (a.actual - tA);
-            });
-            renderTable(); markUnsaved();
-        }
-
-        async function runRealMarketAnalysis() {
-            const porto = portfolios.find(p => String(p.id) === String(activePortfolioId));
-            if (porto.assets.reduce((sum, a) => sum + (a.weight || 0), 0) < 99.5) return alert("Alokasi harus tepat 100%.");
-            document.getElementById('loadingState').classList.remove('hidden');
-            const resDash = document.getElementById('resultsDashboard');
-            resDash.classList.add('hidden');
-            try {
-                const uniqueTickers = [...new Set(porto.assets.map(a => a.name.trim().toUpperCase()))];
-                for (let ticker of uniqueTickers) {
-                    if (!marketDataCache[ticker]) {
-                        let sym = ticker; if (sym === 'BTC' || sym === 'ETH') sym += '-USD';
-                        const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/' + sym + '?interval=1mo&range=1y')}`);
-                        const proxyData = await res.json();
-                        const data = JSON.parse(proxyData.contents);
-                        const closes = data.chart.result[0].indicators.quote[0].close.filter(p => p !== null);
-                        marketDataCache[ticker] = { cagr: Math.pow(closes[closes.length-1]/closes[0], 12/closes.length)-1 };
-                    }
-                }
-                let bestWeights = porto.assets.map(() => Math.random());
-                let s = bestWeights.reduce((a,b)=>a+b, 0); bestWeights = bestWeights.map(w => (w/s)*100);
-                resDash.innerHTML = `<div class="glass-panel p-6 rounded-2xl"><h3 class="text-[10px] font-black text-[#00ff94] uppercase mb-4 text-center">Rekomendasi AI</h3><table class="w-full text-left"><thead><tr class="text-[8px] text-slate-500 uppercase"><th class="p-2">Asset</th><th class="p-2 text-center">User %</th><th class="p-2 text-center text-[#00ff94]">AI %</th></tr></thead><tbody class="divide-y divide-white/5">${porto.assets.map((a, idx) => `<tr><td class="p-2 font-black text-white text-xs">${a.name}</td><td class="p-2 text-center text-slate-400 text-xs">${a.weight.toFixed(1)}%</td><td class="p-2 text-center text-[#00ff94] font-black text-xs">${bestWeights[idx].toFixed(1)}%</td></tr>`).join('')}</tbody></table></div>`;
-                resDash.classList.remove('hidden');
-            } catch (e) { alert("AI Gagal: Cek koneksi internet."); } finally { document.getElementById('loadingState').classList.add('hidden'); }
-        }
-
-        async function fetchLivePricesTick() {
-            const porto = portfolios.find(p => String(p.id) === String(activePortfolioId));
-            if(!porto) return;
-            const tickers = [...new Set(porto.assets.map(a => a.name.toUpperCase()))];
-            for(let t of tickers) {
-                try {
-                    const symbol = t === 'BTC' ? 'BTCUSDT' : (t === 'ETH' ? 'ETHUSDT' : null);
-                    if(!symbol) continue;
-                    const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
-                    const data = await res.json();
-                    livePrices[t] = { price: parseFloat(data.price) };
-                } catch(e) {}
-            }
-            updateCalculations();
-        }
-
-        function toggleCurrency(idx) { const porto = portfolios.find(p => String(p.id) === String(activePortfolioId)); porto.assets[idx].currency = porto.assets[idx].currency === 'USD' ? 'IDR' : 'USD'; renderTable(); }
-        function addAsset() { const porto = portfolios.find(p => String(p.id) === String(activePortfolioId)); porto.assets.push({ id: String(Date.now()), name: 'NEW', weight: 0, currency: 'USD', actual: 0 }); renderTable(); }
-        function deleteAsset(i) { const porto = portfolios.find(p => String(p.id) === String(activePortfolioId)); porto.assets.splice(i, 1); renderTable(); }
-        function toggleSettings() { document.getElementById('settingsPanel').classList.toggle('hidden'); }
-        function initSortable() { if (sortableInstance) sortableInstance.destroy(); sortableInstance = Sortable.create(document.getElementById('tableBody'), { handle: '.drag-handle', animation: 150, onEnd: function (evt) { const porto = portfolios.find(p => String(p.id) === String(activePortfolioId)); const item = porto.assets.splice(evt.oldIndex, 1)[0]; porto.assets.splice(evt.newIndex, 0, item); markUnsaved(); } }); }
-        
-        window.onload = initApp;
+        function saveToStorage() { localStorage.setItem('portoV11_final_stable', JSON.stringify(state)); }
+        function saveTextOnly(f, v) { state.tabs[state.activeTabIndex][f] = v; saveToStorage(); }
+        function toggleCurrency(i) { state.tabs[state.activeTabIndex].assets[i].currency = state.tabs[state.activeTabIndex].assets[i].currency === 'IDR' ? 'USD' : 'IDR'; saveToStorage(); render(); }
+        function addRow() { state.tabs[state.activeTabIndex].assets.push({ name: "NEW ASSET", weight: 0, actual: 0, profit: 0, currency: "IDR" }); saveToStorage(); render(); }
+        function deleteRow(i) { state.tabs[state.activeTabIndex].assets.splice(i, 1); saveToStorage(); render(); }
+        function handleSort(t) { if(!t) return; state.tabs[state.activeTabIndex].assets.sort((a,b) => t==='high' ? (b.weight-a.weight) : (a.weight-b.weight)); render(); }
+        function handleFilterAction(t) { if(!t) return; const tab = state.tabs[state.activeTabIndex]; tab.assets.sort((a,b) => { const diffA = ((a.weight/100)*tab.modal) - (a.currency==='USD'?a.actual*tab.kurs:a.actual); const diffB = ((b.weight/100)*tab.modal) - (b.currency==='USD'?b.actual*tab.kurs:b.actual); return t === 'buy' ? (diffB - diffA) : (diffA - diffB); }); render(); }
+        function renderTabs() { const container = document.getElementById('portfolioTabs'); container.innerHTML = ''; state.tabs.forEach((tab, idx) => { const tabBtn = document.createElement('div'); tabBtn.className = `px-6 py-3 cursor-pointer border-r border-slate-100 flex items-center transition-all ${idx === state.activeTabIndex ? 'tab-active' : 'tab-inactive hover:bg-slate-50'}`; tabBtn.innerHTML = `<span class="text-[10px] font-black uppercase">${tab.title || 'PORTFOLIO'}</span>${state.tabs.length > 1 ? `<span onclick="event.stopPropagation(); deleteTab(${idx})" class="ml-2 text-slate-300">×</span>` : ''}`; tabBtn.onclick = () => { state.activeTabIndex = idx; init(); }; container.appendChild(tabBtn); }); }
+        function addNewTab() { state.tabs.push({ title: "NEW PORTFOLIO", modal: 0, kurs: 16000, notes: "", assets: [] }); state.activeTabIndex = state.tabs.length - 1; saveToStorage(); init(); }
+        function deleteTab(idx) { if(confirm('Hapus tab?')) { state.tabs.splice(idx,1); state.activeTabIndex = 0; saveToStorage(); init(); } }
+        function handleUsdInput(el, f, i, af) { let val = parseFloat(el.value.replace(/[^0-9.]/g, '')) || 0; state.tabs[state.activeTabIndex].assets[i][af] = val; saveToStorage(); updateSummaries(); }
+        function init() { const tab = state.tabs[state.activeTabIndex]; document.getElementById('modalInput').value = tab.modal ? tab.modal.toLocaleString('id-ID') : ""; document.getElementById('kursInput').value = tab.kurs ? tab.kurs.toLocaleString('id-ID') : ""; document.getElementById('activePortoTitle').value = tab.title; document.getElementById('specialNotes').value = tab.notes; render(); }
+        init();
     </script>
 </body>
 </html>
-
-
