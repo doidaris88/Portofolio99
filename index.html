@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Portfolio Pro v11.1 - Smart Weight Logic</title>
+    <title>Portfolio Pro v11.1 - Ultimate Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
@@ -79,7 +79,14 @@
                                     <option value="sell">Prio SELL</option>
                                 </select>
                             </th>
-                            <th class="text-right min-w-[120px]">Nominal Jual (30%)</th>
+                            <th class="text-right min-w-[120px]">
+                                <div class="flex flex-col">
+                                    <span>Nominal Jual</span>
+                                    <div class="flex items-center justify-end gap-1 text-[8px] font-bold text-indigo-500 lowercase">
+                                        (<input type="number" id="percLock" class="w-4 bg-transparent text-right p-0" value="30" oninput="updateSummaries()">%)
+                                    </div>
+                                </div>
+                            </th>
                             <th class="text-center w-12 border-l border-slate-100">Del</th>
                         </tr>
                     </thead>
@@ -97,6 +104,7 @@
                 </div>
                 <span id="totalProfitLabel" class="text-lg font-black text-emerald-600">Rp 0</span>
             </div>
+            
             <div class="glass-panel p-4 rounded-xl border-l-4 border-rose-500 bg-rose-50/30">
                 <div class="flex justify-between items-start mb-1">
                     <div class="flex items-center gap-1">
@@ -107,6 +115,7 @@
                 </div>
                 <span id="cashAllocLabel" class="text-lg font-black text-rose-600 block">Rp 0</span>
             </div>
+
             <div class="glass-panel p-4 rounded-xl border-l-4 border-indigo-500">
                 <div class="flex items-center justify-between mb-1">
                     <div class="flex items-center gap-1">
@@ -117,6 +126,7 @@
                 </div>
                 <span id="distCoreLabel" class="text-lg font-black text-slate-700 block">Rp 0</span>
             </div>
+
             <div class="glass-panel p-4 rounded-xl border-l-4 border-slate-400">
                 <div class="flex items-center justify-between mb-1">
                     <div class="flex items-center gap-1">
@@ -130,7 +140,7 @@
         </div>
 
         <div class="glass-panel rounded-2xl px-3 pb-3 pt-5 border-l-4 border-slate-700">
-            <textarea id="specialNotes" rows="6" class="w-full bg-black/5 border border-slate-100 rounded-xl p-4 text-xs text-slate-600 outline-none placeholder:text-slate-400 focus:border-indigo-300 font-mono transition-all" placeholder="Strategi investasi..." oninput="saveTextOnly('notes', this.value)"></textarea>
+            <textarea id="specialNotes" rows="5" class="w-full bg-black/5 border border-slate-100 rounded-xl p-4 text-xs text-slate-600 outline-none placeholder:text-slate-400 focus:border-indigo-300 font-mono transition-all" placeholder="Tulis strategi investasi atau catatan kecil di sini..." oninput="saveTextOnly('notes', this.value)"></textarea>
         </div>
     </div>
 
@@ -164,26 +174,14 @@
             updateSummaries(); 
         }
 
-        // FIXED LOGIC: Pembersihan nol & kuota sisa otomatis
         function handleWeightInput(idx, el) {
             let val = el.value;
-            // Bersihkan nol di depan secara manual untuk tampilan input
-            if (val.length > 1 && val.startsWith('0')) {
-                val = val.replace(/^0+/, '');
-                el.value = val;
-            }
-            
+            if (val.length > 1 && val.startsWith('0')) { val = val.replace(/^0+/, ''); el.value = val; }
             let numVal = parseFloat(val) || 0;
             let tab = state.tabs[state.activeTabIndex];
             let otherWeights = tab.assets.reduce((s, a, i) => i === idx ? s : s + (parseFloat(a.weight) || 0), 0);
-            
-            // Isi sisanya saja jika melebihi kuota 100%
             let allowed = 100 - otherWeights;
-            if (numVal > allowed) {
-                numVal = allowed;
-                el.value = numVal;
-            }
-
+            if (numVal > allowed) { numVal = allowed; el.value = numVal; }
             tab.assets[idx].weight = numVal;
             saveToStorage();
             updateSummaries();
@@ -192,17 +190,19 @@
         function updateSummaries() {
             const tab = state.tabs[state.activeTabIndex];
             const kurs = tab.kurs || 1;
+            const lockPerc = parseFloat(document.getElementById('percLock').value) / 100 || 0;
             document.getElementById('systemValueLabel').innerText = "$ " + formatUSD(tab.modal / kurs);
             
             let totalHarvestedIDR = 0;
             tab.assets.forEach((asset, idx) => {
                 const isUSD = asset.currency === 'USD';
-                const targetNominal = (asset.weight / 100) * tab.modal;
+                const weight = asset.weight || 0;
+                const targetNominal = (weight / 100) * tab.modal;
                 const targetInCurrency = isUSD ? (targetNominal / kurs) : targetNominal;
                 const profitMurni = asset.actual - targetInCurrency;
                 asset.profit = profitMurni;
 
-                const nominalJual = profitMurni > 0 ? (0.30 * profitMurni) : 0;
+                const nominalJual = profitMurni > 0 ? (lockPerc * profitMurni) : 0;
                 totalHarvestedIDR += isUSD ? (nominalJual * kurs) : nominalJual;
 
                 const row = document.querySelector(`tr[data-idx="${idx}"]`);
@@ -211,7 +211,6 @@
                     const pCell = row.querySelector('.profit-cell');
                     pCell.innerText = isUSD ? formatUSD(profitMurni) : formatIDR(profitMurni);
                     pCell.className = `p-3 text-right font-bold profit-cell ${profitMurni >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
-                    
                     const actualIDR = isUSD ? asset.actual * kurs : asset.actual;
                     const diffIDR = targetNominal - actualIDR;
                     const aCell = row.querySelector('.action-cell');
@@ -238,10 +237,7 @@
             
             ['total', 'cash', 'core', 'def'].forEach(p => {
                 const btn = document.getElementById(`cur_${p}`);
-                if(btn) {
-                    btn.innerText = state.panelCurrencies[p];
-                    btn.className = `currency-switch ${state.panelCurrencies[p] === 'USD' ? 'usd-mode' : 'idr-mode'}`;
-                }
+                if(btn) { btn.innerText = state.panelCurrencies[p]; btn.className = `currency-switch ${state.panelCurrencies[p] === 'USD' ? 'usd-mode' : 'idr-mode'}`; }
             });
         }
 
