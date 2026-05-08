@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Portfolio Pro v11.1 - Final Edition</title>
+    <title>Portfolio Pro v11.1 - Smart Weight Logic</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
@@ -164,10 +164,27 @@
             updateSummaries(); 
         }
 
-        function handleWeightInput(idx, val) {
+        // FIXED LOGIC: Pembersihan nol & kuota sisa otomatis
+        function handleWeightInput(idx, el) {
+            let val = el.value;
+            // Bersihkan nol di depan secara manual untuk tampilan input
+            if (val.length > 1 && val.startsWith('0')) {
+                val = val.replace(/^0+/, '');
+                el.value = val;
+            }
+            
+            let numVal = parseFloat(val) || 0;
             let tab = state.tabs[state.activeTabIndex];
-            let others = tab.assets.reduce((s, a, i) => i === idx ? s : s + (parseFloat(a.weight) || 0), 0);
-            tab.assets[idx].weight = Math.min(parseFloat(val || 0), 100 - others);
+            let otherWeights = tab.assets.reduce((s, a, i) => i === idx ? s : s + (parseFloat(a.weight) || 0), 0);
+            
+            // Isi sisanya saja jika melebihi kuota 100%
+            let allowed = 100 - otherWeights;
+            if (numVal > allowed) {
+                numVal = allowed;
+                el.value = numVal;
+            }
+
+            tab.assets[idx].weight = numVal;
             saveToStorage();
             updateSummaries();
         }
@@ -185,7 +202,6 @@
                 const profitMurni = asset.actual - targetInCurrency;
                 asset.profit = profitMurni;
 
-                // Logika Kunci 30% dari profit murni
                 const nominalJual = profitMurni > 0 ? (0.30 * profitMurni) : 0;
                 totalHarvestedIDR += isUSD ? (nominalJual * kurs) : nominalJual;
 
@@ -222,8 +238,10 @@
             
             ['total', 'cash', 'core', 'def'].forEach(p => {
                 const btn = document.getElementById(`cur_${p}`);
-                btn.innerText = state.panelCurrencies[p];
-                btn.className = `currency-switch ${state.panelCurrencies[p] === 'USD' ? 'usd-mode' : 'idr-mode'}`;
+                if(btn) {
+                    btn.innerText = state.panelCurrencies[p];
+                    btn.className = `currency-switch ${state.panelCurrencies[p] === 'USD' ? 'usd-mode' : 'idr-mode'}`;
+                }
             });
         }
 
@@ -238,7 +256,7 @@
                 tr.className = "hover:bg-slate-50 border-b border-slate-100";
                 tr.innerHTML = `<td class="p-3 text-center text-slate-400">${idx + 1}</td>
                     <td class="p-3"><div class="flex items-center gap-2"><input type="text" value="${asset.name}" class="font-bold uppercase" oninput="state.tabs[state.activeTabIndex].assets[${idx}].name=this.value.toUpperCase(); saveToStorage()"><span onclick="toggleCurrency(${idx})" class="currency-switch ${isUSD?'usd-mode':'idr-mode'}">${asset.currency}</span></div></td>
-                    <td class="p-3 bg-slate-100/50"><input type="number" value="${asset.weight || 0}" class="text-center font-black text-indigo-600" oninput="handleWeightInput(${idx}, this.value)"></td>
+                    <td class="p-3 bg-slate-100/50"><input type="number" value="${asset.weight || 0}" class="text-center font-black text-indigo-600" oninput="handleWeightInput(${idx}, this)"></td>
                     <td class="p-3 text-center text-slate-500 font-bold target-cell">-</td>
                     <td class="p-3 text-right"><input type="text" value="${isUSD ? asset.actual : formatIDR(asset.actual)}" class="text-right" oninput="${isUSD ? 'handleUsdInput' : 'formatAndSave'}(this, null, ${idx}, 'actual')"></td>
                     <td class="p-3 text-right font-bold profit-cell">-</td>
@@ -261,7 +279,7 @@
         function addNewTab() { state.tabs.push({ title: "NEW PORTFOLIO", modal: 0, kurs: 16000, notes: "", assets: [] }); state.activeTabIndex = state.tabs.length - 1; saveToStorage(); init(); }
         function deleteTab(idx) { if(confirm('Hapus tab?')) { state.tabs.splice(idx,1); state.activeTabIndex = 0; saveToStorage(); init(); } }
         function handleUsdInput(el, f, i, af) { let val = parseFloat(el.value.replace(/[^0-9.]/g, '')) || 0; state.tabs[state.activeTabIndex].assets[i][af] = val; saveToStorage(); updateSummaries(); }
-        function init() { const tab = state.tabs[state.activeTabIndex]; document.getElementById('modalInput').value = tab.modal ? tab.modal.toLocaleString('id-ID') : ""; document.getElementById('kursInput').value = tab.kurs ? tab.kurs.toLocaleString('id-ID') : ""; document.getElementById('activePortoTitle').value = tab.title; document.getElementById('specialNotes').value = tab.notes; render(); }
+        function init() { const tab = state.tabs[state.activeTabIndex]; document.getElementById('modalInput').value = tab.modal ? tab.modal.toLocaleString('id-ID') : ""; document.getElementById('kursInput').value = tab.kurs ? tab.kurs.toLocaleString('id-ID') : ""; document.getElementById('activePortoTitle').value = tab.title; document.getElementById('specialNotes').value = tab.notes || ""; render(); }
         init();
     </script>
 </body>
