@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Portfolio Pro v11.1 - Zero Clean Fix</title>
+    <title>Portfolio Pro v11.1 - Ultimate Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
     <style>
         body { background-color: #ffffff; color: #334155; font-family: 'Plus Jakarta Sans', sans-serif; min-height: 100vh; }
@@ -14,9 +15,10 @@
         .tab-inactive { color: #94a3b8; border-bottom: 3px solid transparent; }
         input { background: transparent; outline: none; border: none; color: #1e293b; width: 100%; }
         th { background-color: #f1f5f9; color: #64748b; font-size: 9px; font-weight: 900; text-transform: uppercase; padding: 12px 8px; }
-        .currency-switch { font-size: 8px; font-weight: 900; padding: 2px 6px; border-radius: 4px; cursor: pointer; user-select: none; transition: all 0.2s; }
+        .currency-switch { font-size: 8px; font-weight: 900; padding: 2px 6px; border-radius: 4px; cursor: pointer; user-select: none; }
         .idr-mode { background: #e0f2fe; color: #0369a1; }
         .usd-mode { background: #fef3c7; color: #92400e; }
+        .dropdown-icon { color: #6366f1; font-size: 10px; cursor: pointer; background: transparent; outline: none; border: none; }
     </style>
 </head>
 <body class="p-0">
@@ -30,32 +32,23 @@
 
     <div class="max-w-[1400px] mx-auto space-y-6 pb-20 p-4 sm:p-6"> 
         
-        <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 items-start">
             <div class="lg:col-span-1">
                 <input type="text" id="activePortoTitle" class="text-xl font-black text-slate-800 border-b border-slate-200" oninput="saveTextOnly('title', this.value)">
-                <p class="text-[9px] text-slate-400 font-bold tracking-[0.3em] mt-1 uppercase">Clean Input v11.1</p>
+                <p class="text-[9px] text-slate-400 font-bold tracking-[0.3em] mt-1 uppercase">Ultimate PWA v11.1</p>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 lg:col-span-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 lg:col-span-3">
                 <div class="glass-panel p-3 rounded-xl border-l-2 border-slate-400">
                     <span class="text-[8px] text-slate-500 font-black uppercase mb-0.5 block">Modal Dasar (IDR)</span>
                     <input type="text" id="modalInput" class="text-base font-extrabold font-mono" oninput="formatAndSave(this, 'modal')">
                 </div>
                 <div class="glass-panel p-3 rounded-xl border-l-2 border-amber-500">
-                    <span class="text-[8px] text-slate-500 font-black uppercase mb-0.5 block">Kurs USD</span>
+                    <span class="text-[8px] text-slate-500 font-black uppercase mb-0.5 block">Kurs USD (Manual)</span>
                     <input type="text" id="kursInput" class="text-base font-extrabold font-mono" oninput="formatAndSave(this, 'kurs')">
                 </div>
-                
-                <div class="glass-panel p-3 rounded-xl border-l-2 border-indigo-500 bg-indigo-50/30">
-                    <div class="flex justify-between items-center mb-0.5">
-                        <span class="text-[8px] text-indigo-600 font-black uppercase block">Portofolio Saat Ini</span>
-                        <button onclick="togglePortfolioCurrency()" id="portoCurBtn" class="currency-switch idr-mode">IDR</button>
-                    </div>
-                    <input type="text" id="manualTotalInput" class="text-base font-black text-indigo-700 font-mono" placeholder="0" oninput="handleManualTotal(this)">
-                </div>
-
                 <div class="bg-indigo-600 p-3 rounded-xl shadow-lg flex flex-col justify-center">
-                    <span class="text-[8px] text-indigo-200 font-black uppercase mb-0.5 block">System Value (Modal/Kurs)</span>
-                    <span id="systemValueLabel" class="text-base font-black text-white font-mono">$ 0.00</span>
+                    <span class="text-[8px] text-indigo-200 font-black uppercase mb-0.5 block">System Value (USD)</span>
+                    <span id="systemValueLabel" class="text-lg font-black text-white font-mono">$ 0.00</span>
                 </div>
             </div>
         </div>
@@ -67,29 +60,51 @@
                         <tr class="border-b border-slate-200">
                             <th class="text-center w-10">#</th>
                             <th class="min-w-[150px]">Asset Name</th>
-                            <th class="text-center bg-slate-100/50 w-28">% Weight</th>
-                            <th class="text-center min-w-[120px]">Target Ideal</th>
+                            <th class="text-center bg-slate-100/50 w-28">
+                                % Weight 
+                                <select onchange="handleSort(this.value)" class="dropdown-icon">
+                                    <option value="">▼</option>
+                                    <option value="high">High-Low</option>
+                                    <option value="low">Low-High</option>
+                                </select>
+                            </th>
+                            <th class="text-center min-w-[120px]">Target</th>
                             <th class="text-right min-w-[140px]">Actual Size</th>
                             <th class="text-right min-w-[140px]">Profit Murni</th>
-                            <th class="text-center bg-indigo-50 min-w-[150px]">Action</th>
-                            <th class="text-right min-w-[120px]">Nominal Jual (Lock)</th>
+                            <th class="text-center bg-indigo-50 min-w-[150px]">
+                                Action 
+                                <select onchange="handleFilterAction(this.value)" class="dropdown-icon">
+                                    <option value="">▼</option>
+                                    <option value="buy">Prio BUY</option>
+                                    <option value="sell">Prio SELL</option>
+                                </select>
+                            </th>
+                            <th class="text-right min-w-[120px]">
+                                <div class="flex flex-col">
+                                    <span>Nominal Jual</span>
+                                    <div class="flex items-center justify-end gap-1 text-[8px] font-bold text-indigo-500 lowercase">
+                                        (<input type="number" id="percLock" class="w-4 bg-transparent text-right p-0" value="30" oninput="updateSummaries()">%)
+                                    </div>
+                                </div>
+                            </th>
                             <th class="text-center w-12 border-l border-slate-100">Del</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 font-mono text-[11px]" id="assetTableBody"></tbody>
                 </table>
             </div>
-            <button onclick="addRow()" class="w-full p-4 text-[9px] font-black text-slate-400 hover:text-indigo-600 hover:bg-slate-50 uppercase tracking-widest">+ Add Asset Item</button>
+            <button onclick="addRow()" class="w-full p-4 text-[9px] font-black text-slate-400 hover:text-indigo-600 hover:bg-slate-50 uppercase tracking-widest transition-all">+ Add Asset Item</button>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="glass-panel p-4 rounded-xl border-l-4 border-emerald-500 bg-emerald-50/30">
                 <div class="flex justify-between items-start mb-1">
-                    <span class="text-[8px] text-emerald-700 font-black uppercase">Total Panen</span>
+                    <span class="text-[8px] text-emerald-700 font-black uppercase">Total Harvested Profit</span>
                     <button onclick="togglePanelCurrency('total')" id="cur_total" class="currency-switch idr-mode">IDR</button>
                 </div>
                 <span id="totalProfitLabel" class="text-lg font-black text-emerald-600">Rp 0</span>
             </div>
+            
             <div class="glass-panel p-4 rounded-xl border-l-4 border-rose-500 bg-rose-50/30">
                 <div class="flex justify-between items-start mb-1">
                     <div class="flex items-center gap-1">
@@ -100,6 +115,7 @@
                 </div>
                 <span id="cashAllocLabel" class="text-lg font-black text-rose-600 block">Rp 0</span>
             </div>
+
             <div class="glass-panel p-4 rounded-xl border-l-4 border-indigo-500">
                 <div class="flex items-center justify-between mb-1">
                     <div class="flex items-center gap-1">
@@ -110,6 +126,7 @@
                 </div>
                 <span id="distCoreLabel" class="text-lg font-black text-slate-700 block">Rp 0</span>
             </div>
+
             <div class="glass-panel p-4 rounded-xl border-l-4 border-slate-400">
                 <div class="flex items-center justify-between mb-1">
                     <div class="flex items-center gap-1">
@@ -123,156 +140,109 @@
         </div>
 
         <div class="glass-panel rounded-2xl px-3 pb-3 pt-5 border-l-4 border-slate-700">
-            <textarea id="specialNotes" rows="5" class="w-full bg-black/5 border border-slate-100 rounded-xl p-4 text-xs text-slate-600 outline-none placeholder:text-slate-400 font-mono transition-all" placeholder="Catatan Strategi..." oninput="saveTextOnly('notes', this.value)"></textarea>
+            <textarea id="specialNotes" rows="5" class="w-full bg-black/5 border border-slate-100 rounded-xl p-4 text-xs text-slate-600 outline-none placeholder:text-slate-400 focus:border-indigo-300 font-mono transition-all" placeholder="Tulis strategi investasi atau catatan kecil di sini..." oninput="saveTextOnly('notes', this.value)"></textarea>
         </div>
     </div>
 
     <script>
-        const STORAGE_KEY = 'portoV11_final_clean_logic';
-        
-        let state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
+        let state = JSON.parse(localStorage.getItem('portoV11_final_stable')) || {
             activeTabIndex: 0,
-            tabs: [{ 
-                title: "PORTFOLIO 1", 
-                modal: 1500000, kurs: 16000, manualTotal: 1500000, manualTotalCur: 'IDR',
-                panelCurrencies: { total: 'IDR', cash: 'IDR', core: 'IDR', def: 'IDR' },
-                notes: "", assets: [] 
-            }]
+            panelCurrencies: { total: 'IDR', cash: 'IDR', core: 'IDR', def: 'IDR' },
+            tabs: [{ title: "PORTFOLIO 1", modal: 0, kurs: 16000, notes: "", assets: [] }]
         };
 
         const formatIDR = (n) => Math.round(n || 0).toLocaleString('id-ID');
         const formatUSD = (n) => (n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-        function saveToStorage() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-
-        function handleManualTotal(el) {
-            let tab = state.tabs[state.activeTabIndex];
-            let raw = el.value.replace(/[^0-9]/g, "").replace(/^0+/, ""); 
-            tab.manualTotal = parseInt(raw, 10) || 0;
-            el.value = tab.manualTotal === 0 ? "0" : (tab.manualTotalCur === 'IDR' ? tab.manualTotal.toLocaleString('id-ID') : tab.manualTotal.toLocaleString('en-US'));
-            updateSummaries();
+        function togglePanelCurrency(panel) {
+            state.panelCurrencies[panel] = state.panelCurrencies[panel] === 'IDR' ? 'USD' : 'IDR';
             saveToStorage();
+            updateSummaries();
         }
 
-        function togglePortfolioCurrency() {
+        function formatAndSave(el, field, assetIdx = null, assetField = null) {
+            let cursor = el.selectionStart;
+            let oldLen = el.value.length;
+            let raw = el.value.replace(/\D/g, "");
+            let val = raw ? parseInt(raw, 10) : 0;
+            if (assetIdx !== null) state.tabs[state.activeTabIndex].assets[assetIdx][assetField] = val;
+            else state.tabs[state.activeTabIndex][field] = val;
+            el.value = val ? val.toLocaleString('id-ID') : "";
+            let newLen = el.value.length;
+            el.setSelectionRange(cursor + (newLen - oldLen), cursor + (newLen - oldLen));
+            saveToStorage();
+            updateSummaries(); 
+        }
+
+        function handleWeightInput(idx, el) {
+            let val = el.value;
+            if (val.length > 1 && val.startsWith('0')) { val = val.replace(/^0+/, ''); el.value = val; }
+            let numVal = parseFloat(val) || 0;
             let tab = state.tabs[state.activeTabIndex];
-            tab.manualTotalCur = tab.manualTotalCur === 'IDR' ? 'USD' : 'IDR';
-            render(); 
+            let otherWeights = tab.assets.reduce((s, a, i) => i === idx ? s : s + (parseFloat(a.weight) || 0), 0);
+            let allowed = 100 - otherWeights;
+            if (numVal > allowed) { numVal = allowed; el.value = numVal; }
+            tab.assets[idx].weight = numVal;
+            saveToStorage();
+            updateSummaries();
         }
 
         function updateSummaries() {
             const tab = state.tabs[state.activeTabIndex];
             const kurs = tab.kurs || 1;
-            const systemValueUSD = tab.modal / kurs;
-            document.getElementById('systemValueLabel').innerText = "$ " + formatUSD(systemValueUSD);
-            const totalBasisIDR = tab.manualTotalCur === 'USD' ? tab.manualTotal * kurs : tab.manualTotal;
+            const lockPerc = parseFloat(document.getElementById('percLock').value) / 100 || 0;
+            document.getElementById('systemValueLabel').innerText = "$ " + formatUSD(tab.modal / kurs);
+            
             let totalHarvestedIDR = 0;
-
             tab.assets.forEach((asset, idx) => {
                 const isUSD = asset.currency === 'USD';
                 const weight = asset.weight || 0;
-                let targetInCurrency = isUSD ? ((weight / 100) * systemValueUSD) : ((weight / 100) * tab.modal);
+                const targetNominal = (weight / 100) * tab.modal;
+                const targetInCurrency = isUSD ? (targetNominal / kurs) : targetNominal;
                 const profitMurni = asset.actual - targetInCurrency;
-                const rebalanceTargetIDR = (weight / 100) * totalBasisIDR;
-                const rebalanceTargetInCur = isUSD ? (rebalanceTargetIDR / kurs) : rebalanceTargetIDR;
-                const diffActualTarget = asset.actual - rebalanceTargetInCur;
-                const nominalJual = diffActualTarget > 0 ? diffActualTarget : 0;
+                asset.profit = profitMurni;
+
+                const nominalJual = profitMurni > 0 ? (lockPerc * profitMurni) : 0;
                 totalHarvestedIDR += isUSD ? (nominalJual * kurs) : nominalJual;
 
                 const row = document.querySelector(`tr[data-idx="${idx}"]`);
                 if (row) {
-                    row.querySelector('.target-cell').innerText = isUSD ? '$'+formatUSD(targetInCurrency) : 'Rp'+formatIDR(targetInCurrency);
+                    row.querySelector('.target-cell').innerText = isUSD ? '$'+formatUSD(targetInCurrency) : 'Rp'+formatIDR(targetNominal);
                     const pCell = row.querySelector('.profit-cell');
                     pCell.innerText = isUSD ? formatUSD(profitMurni) : formatIDR(profitMurni);
                     pCell.className = `p-3 text-right font-bold profit-cell ${profitMurni >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
+                    const actualIDR = isUSD ? asset.actual * kurs : asset.actual;
+                    const diffIDR = targetNominal - actualIDR;
                     const aCell = row.querySelector('.action-cell');
-                    if (diffActualTarget < -500) aCell.innerHTML = `<span class="text-emerald-600 font-bold">BUY: ${isUSD ? '$'+formatUSD(Math.abs(diffActualTarget)) : 'Rp'+formatIDR(Math.abs(diffActualTarget))}</span>`;
-                    else if (diffActualTarget > 500) aCell.innerHTML = `<span class="text-rose-500 font-bold">SELL: ${isUSD ? '$'+formatUSD(diffActualTarget) : 'Rp'+formatIDR(diffActualTarget)}</span>`;
+                    if (diffIDR > 500) aCell.innerHTML = `<span class="text-emerald-600 font-bold">BUY: ${isUSD ? '$'+formatUSD(diffIDR/kurs) : 'Rp'+formatIDR(diffIDR)}</span>`;
+                    else if (diffIDR < -500) aCell.innerHTML = `<span class="text-rose-500 font-bold">SELL: ${isUSD ? '$'+formatUSD(Math.abs(diffIDR)/kurs) : 'Rp'+formatIDR(Math.abs(diffIDR))}</span>`;
                     else aCell.innerHTML = '<span class="text-slate-400">HOLD</span>';
                     row.querySelector('.sell-cell').innerText = isUSD ? '$'+formatUSD(nominalJual) : 'Rp'+formatIDR(nominalJual);
                 }
             });
 
-            const pCash = (parseFloat(document.getElementById('percCash').value) || 0) / 100;
-            const pCore = (parseFloat(document.getElementById('percCore').value) || 0) / 100;
-            const pDef = (parseFloat(document.getElementById('percDef').value) || 0) / 100;
-            const cashVal = totalHarvestedIDR * pCash;
-            const remaining = totalHarvestedIDR - cashVal;
-            const coreVal = remaining * (pCore / (pCore + pDef || 1));
-            const defVal = remaining * (pDef / (pCore + pDef || 1));
-            const pMap = { total: totalHarvestedIDR, cash: cashVal, core: coreVal, def: defVal };
-            const ids = { total: 'totalProfitLabel', cash: 'cashAllocLabel', core: 'distCoreLabel', def: 'distDefLabel' };
+            const pValues = {
+                total: totalHarvestedIDR,
+                cash: totalHarvestedIDR * (parseFloat(document.getElementById('percCash').value) / 100),
+                remaining: totalHarvestedIDR - (totalHarvestedIDR * (parseFloat(document.getElementById('percCash').value) / 100))
+            };
+            const pWeights = { core: parseFloat(document.getElementById('percCore').value), def: parseFloat(document.getElementById('percDef').value) };
+            pValues.core = pValues.remaining * (pWeights.core / (pWeights.core + pWeights.def || 1));
+            pValues.def = pValues.remaining * (pWeights.def / (pWeights.core + pWeights.def || 1));
 
-            Object.keys(pMap).forEach(k => {
-                const isUSD = tab.panelCurrencies[k] === 'USD';
-                document.getElementById(ids[k]).innerText = isUSD ? "$ " + formatUSD(pMap[k]/kurs) : "Rp " + formatIDR(pMap[k]);
-                const btn = document.getElementById(`cur_${k}`);
-                if(btn) { btn.innerText = tab.panelCurrencies[k]; btn.className = `currency-switch ${isUSD ? 'usd-mode' : 'idr-mode'}`; }
+            document.getElementById('totalProfitLabel').innerText = state.panelCurrencies.total === 'USD' ? "$ " + formatUSD(pValues.total / kurs) : "Rp " + formatIDR(pValues.total);
+            document.getElementById('cashAllocLabel').innerText = state.panelCurrencies.cash === 'USD' ? "$ " + formatUSD(pValues.cash / kurs) : "Rp " + formatIDR(pValues.cash);
+            document.getElementById('distCoreLabel').innerText = state.panelCurrencies.core === 'USD' ? "$ " + formatUSD(pValues.core / kurs) : "Rp " + formatIDR(pValues.core);
+            document.getElementById('distDefLabel').innerText = state.panelCurrencies.def === 'USD' ? "$ " + formatUSD(pValues.def / kurs) : "Rp " + formatIDR(pValues.def);
+            
+            ['total', 'cash', 'core', 'def'].forEach(p => {
+                const btn = document.getElementById(`cur_${p}`);
+                if(btn) { btn.innerText = state.panelCurrencies[p]; btn.className = `currency-switch ${state.panelCurrencies[p] === 'USD' ? 'usd-mode' : 'idr-mode'}`; }
             });
-        }
-
-        // POSISI PERBAIKAN: Fungsi format angka IDR/Umum
-        function formatAndSave(el, field, assetIdx = null, assetField = null) {
-            let cursor = el.selectionStart;
-            let oldLen = el.value.length;
-            
-            // Perbaikan 1: Hapus semua karakter non-angka dan angka nol di depan
-            let raw = el.value.replace(/\D/g, "").replace(/^0+/, "");
-            let val = raw ? parseInt(raw, 10) : 0;
-            
-            let tab = state.tabs[state.activeTabIndex];
-            if (assetIdx !== null) tab.assets[assetIdx][assetField] = val;
-            else tab[field] = val;
-            
-            el.value = val === 0 ? "0" : val.toLocaleString('id-ID');
-            let newLen = el.value.length;
-            el.setSelectionRange(cursor + (newLen - oldLen), cursor + (newLen - oldLen));
-            updateSummaries(); saveToStorage();
-        }
-
-        // POSISI PERBAIKAN: Fungsi input USD Aset
-        function handleUsdAssetInput(el, f, i, af) {
-            // Perbaikan 2: Hapus angka nol di depan untuk input desimal USD
-            let valStr = el.value.replace(/[^0-9.]/g, '').replace(/^0+(?=\d)/, '');
-            let val = parseFloat(valStr) || 0;
-            
-            state.tabs[state.activeTabIndex].assets[i][af] = val;
-            el.value = valStr; // Mengupdate tampilan input secara bersih
-            
-            updateSummaries(); saveToStorage();
-        }
-
-        function handleWeightInput(idx, el) {
-            let val = el.value.replace(/^0+(?=\d)/, ''); if (val === '') val = '0'; el.value = val;
-            let numVal = parseFloat(val) || 0;
-            let tab = state.tabs[state.activeTabIndex];
-            let others = tab.assets.reduce((sum, asset, i) => i === idx ? sum : sum + (parseFloat(asset.weight) || 0), 0);
-            if (numVal > (100 - others)) { numVal = 100 - others; el.value = numVal; }
-            tab.assets[idx].weight = numVal;
-            updateSummaries(); saveToStorage();
-        }
-
-        function toggleAssetCurrency(i) {
-            state.tabs[state.activeTabIndex].assets[i].currency = state.tabs[state.activeTabIndex].assets[i].currency === 'IDR' ? 'USD' : 'IDR';
-            saveToStorage(); render();
-        }
-
-        function togglePanelCurrency(panel) {
-            state.tabs[state.activeTabIndex].panelCurrencies[panel] = state.tabs[state.activeTabIndex].panelCurrencies[panel] === 'IDR' ? 'USD' : 'IDR';
-            updateSummaries(); saveToStorage();
         }
 
         function render() {
             const tab = state.tabs[state.activeTabIndex];
-            document.getElementById('modalInput').value = tab.modal ? tab.modal.toLocaleString('id-ID') : "0";
-            document.getElementById('kursInput').value = tab.kurs ? tab.kurs.toLocaleString('id-ID') : "0";
-            document.getElementById('activePortoTitle').value = tab.title;
-            document.getElementById('specialNotes').value = tab.notes || "";
-            const portoInput = document.getElementById('manualTotalInput');
-            portoInput.value = tab.manualTotal ? (tab.manualTotalCur === 'IDR' ? tab.manualTotal.toLocaleString('id-ID') : tab.manualTotal.toLocaleString('en-US')) : "0";
-            const portoCurBtn = document.getElementById('portoCurBtn');
-            portoCurBtn.innerText = tab.manualTotalCur;
-            portoCurBtn.className = `currency-switch ${tab.manualTotalCur === 'USD' ? 'usd-mode' : 'idr-mode'}`;
             const tbody = document.getElementById('assetTableBody');
             tbody.innerHTML = '';
             tab.assets.forEach((asset, idx) => {
@@ -281,12 +251,12 @@
                 tr.setAttribute('data-idx', idx);
                 tr.className = "hover:bg-slate-50 border-b border-slate-100";
                 tr.innerHTML = `<td class="p-3 text-center text-slate-400">${idx + 1}</td>
-                    <td class="p-3"><div class="flex items-center gap-2"><input type="text" value="${asset.name}" class="font-bold uppercase" oninput="state.tabs[state.activeTabIndex].assets[${idx}].name=this.value.toUpperCase(); saveToStorage()"> <span onclick="toggleAssetCurrency(${idx})" class="currency-switch ${isUSD?'usd-mode':'idr-mode'}">${asset.currency}</span></div></td>
+                    <td class="p-3"><div class="flex items-center gap-2"><input type="text" value="${asset.name}" class="font-bold uppercase" oninput="state.tabs[state.activeTabIndex].assets[${idx}].name=this.value.toUpperCase(); saveToStorage()"><span onclick="toggleCurrency(${idx})" class="currency-switch ${isUSD?'usd-mode':'idr-mode'}">${asset.currency}</span></div></td>
                     <td class="p-3 bg-slate-100/50"><input type="number" value="${asset.weight || 0}" class="text-center font-black text-indigo-600" oninput="handleWeightInput(${idx}, this)"></td>
                     <td class="p-3 text-center text-slate-500 font-bold target-cell">-</td>
-                    <td class="p-3 text-right"><input type="text" value="${isUSD ? asset.actual : asset.actual.toLocaleString('id-ID')}" class="text-right" oninput="${isUSD ? 'handleUsdAssetInput' : 'formatAndSave'}(this, null, ${idx}, 'actual')"></td>
+                    <td class="p-3 text-right"><input type="text" value="${isUSD ? asset.actual : formatIDR(asset.actual)}" class="text-right" oninput="${isUSD ? 'handleUsdInput' : 'formatAndSave'}(this, null, ${idx}, 'actual')"></td>
                     <td class="p-3 text-right font-bold profit-cell">-</td>
-                    <td class="p-3 text-center bg-indigo-50/30 action-cell">-</td>
+                    <td class="p-3 text-center bg-indigo-50/30 font-bold action-cell">-</td>
                     <td class="p-3 text-right text-rose-500 font-bold sell-cell">-</td>
                     <td class="p-3 text-center border-l border-slate-100 cursor-pointer text-slate-300 hover:text-rose-500" onclick="deleteRow(${idx})">🗑️</td>`;
                 tbody.appendChild(tr);
@@ -294,28 +264,19 @@
             updateSummaries(); renderTabs();
         }
 
-        function renderTabs() {
-            const container = document.getElementById('portfolioTabs'); container.innerHTML = '';
-            state.tabs.forEach((tab, idx) => {
-                const btn = document.createElement('div');
-                btn.className = `px-6 py-3 cursor-pointer border-r border-slate-100 flex items-center ${idx === state.activeTabIndex ? 'tab-active' : 'tab-inactive hover:bg-slate-50'}`;
-                btn.innerHTML = `<span class="text-[10px] font-black uppercase">${tab.title || 'PORTO'}</span>${state.tabs.length > 1 ? `<span onclick="event.stopPropagation(); deleteTab(${idx})" class="ml-2 text-slate-300">×</span>` : ''}`;
-                btn.onclick = () => { state.activeTabIndex = idx; render(); };
-                container.appendChild(btn);
-            });
-        }
-
-        function addNewTab() {
-            state.tabs.push({ title: "PORTO " + (state.tabs.length + 1), modal: 1500000, kurs: 16000, manualTotal: 1500000, manualTotalCur: 'IDR', panelCurrencies: { total: 'IDR', cash: 'IDR', core: 'IDR', def: 'IDR' }, notes: "", assets: [] });
-            state.activeTabIndex = state.tabs.length - 1; saveToStorage(); render();
-        }
-
-        function deleteTab(idx) { if(confirm('Hapus?')) { state.tabs.splice(idx,1); state.activeTabIndex = 0; saveToStorage(); render(); } }
-        function addRow() { state.tabs[state.activeTabIndex].assets.push({ name: "NEW", weight: 0, actual: 0, currency: "IDR" }); saveToStorage(); render(); }
-        function deleteRow(i) { state.tabs[state.activeTabIndex].assets.splice(i, 1); saveToStorage(); render(); }
+        function saveToStorage() { localStorage.setItem('portoV11_final_stable', JSON.stringify(state)); }
         function saveTextOnly(f, v) { state.tabs[state.activeTabIndex][f] = v; saveToStorage(); }
-
-        render();
+        function toggleCurrency(i) { state.tabs[state.activeTabIndex].assets[i].currency = state.tabs[state.activeTabIndex].assets[i].currency === 'IDR' ? 'USD' : 'IDR'; saveToStorage(); render(); }
+        function addRow() { state.tabs[state.activeTabIndex].assets.push({ name: "NEW ASSET", weight: 0, actual: 0, profit: 0, currency: "IDR" }); saveToStorage(); render(); }
+        function deleteRow(i) { state.tabs[state.activeTabIndex].assets.splice(i, 1); saveToStorage(); render(); }
+        function handleSort(t) { if(!t) return; state.tabs[state.activeTabIndex].assets.sort((a,b) => t==='high' ? (b.weight-a.weight) : (a.weight-b.weight)); render(); }
+        function handleFilterAction(t) { if(!t) return; const tab = state.tabs[state.activeTabIndex]; tab.assets.sort((a,b) => { const diffA = ((a.weight/100)*tab.modal) - (a.currency==='USD'?a.actual*tab.kurs:a.actual); const diffB = ((b.weight/100)*tab.modal) - (b.currency==='USD'?b.actual*tab.kurs:b.actual); return t === 'buy' ? (diffB - diffA) : (diffA - diffB); }); render(); }
+        function renderTabs() { const container = document.getElementById('portfolioTabs'); container.innerHTML = ''; state.tabs.forEach((tab, idx) => { const tabBtn = document.createElement('div'); tabBtn.className = `px-6 py-3 cursor-pointer border-r border-slate-100 flex items-center transition-all ${idx === state.activeTabIndex ? 'tab-active' : 'tab-inactive hover:bg-slate-50'}`; tabBtn.innerHTML = `<span class="text-[10px] font-black uppercase">${tab.title || 'PORTFOLIO'}</span>${state.tabs.length > 1 ? `<span onclick="event.stopPropagation(); deleteTab(${idx})" class="ml-2 text-slate-300">×</span>` : ''}`; tabBtn.onclick = () => { state.activeTabIndex = idx; init(); }; container.appendChild(tabBtn); }); }
+        function addNewTab() { state.tabs.push({ title: "NEW PORTFOLIO", modal: 0, kurs: 16000, notes: "", assets: [] }); state.activeTabIndex = state.tabs.length - 1; saveToStorage(); init(); }
+        function deleteTab(idx) { if(confirm('Hapus tab?')) { state.tabs.splice(idx,1); state.activeTabIndex = 0; saveToStorage(); init(); } }
+        function handleUsdInput(el, f, i, af) { let val = parseFloat(el.value.replace(/[^0-9.]/g, '')) || 0; state.tabs[state.activeTabIndex].assets[i][af] = val; saveToStorage(); updateSummaries(); }
+        function init() { const tab = state.tabs[state.activeTabIndex]; document.getElementById('modalInput').value = tab.modal ? tab.modal.toLocaleString('id-ID') : ""; document.getElementById('kursInput').value = tab.kurs ? tab.kurs.toLocaleString('id-ID') : ""; document.getElementById('activePortoTitle').value = tab.title; document.getElementById('specialNotes').value = tab.notes || ""; render(); }
+        init();
     </script>
 </body>
 </html>
