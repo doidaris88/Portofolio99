@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Portfolio Pro v11.2 - Precision Rebalance</title>
+    <title>Portfolio Pro v12.0 - Bulletproof Fix</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
     <style>
@@ -33,7 +33,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
             <div class="lg:col-span-1">
                 <input type="text" id="activePortoTitle" class="text-xl font-black text-slate-800 border-b border-slate-200" oninput="saveTextOnly('title', this.value)">
-                <p class="text-[9px] text-slate-400 font-bold tracking-[0.3em] mt-1 uppercase">Precision Logic v11.2</p>
+                <p class="text-[9px] text-slate-400 font-bold tracking-[0.3em] mt-1 uppercase">Precision v12.0</p>
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 lg:col-span-4">
                 <div class="glass-panel p-3 rounded-xl border-l-2 border-slate-400">
@@ -48,7 +48,7 @@
                 <div class="glass-panel p-3 rounded-xl border-l-2 border-indigo-500 bg-indigo-50/30">
                     <div class="flex justify-between items-center mb-0.5">
                         <span class="text-[8px] text-indigo-600 font-black uppercase block">Portofolio Saat Ini</span>
-                        <button onclick="togglePortfolioCurrency()" id="portoCurBtn" class="currency-switch idr-mode">IDR</button>
+                        <button onclick="togglePortfolioCurrency()" id="portoCurBtn" class="currency-switch">IDR</button>
                     </div>
                     <input type="text" id="manualTotalInput" class="text-base font-black text-indigo-700 font-mono" placeholder="0" oninput="handleManualTotal(this)">
                 </div>
@@ -86,7 +86,7 @@
             <div class="glass-panel p-4 rounded-xl border-l-4 border-emerald-500 bg-emerald-50/30">
                 <div class="flex justify-between items-start mb-1">
                     <span class="text-[8px] text-emerald-700 font-black uppercase">Total Panen</span>
-                    <button onclick="togglePanelCurrency('total')" id="cur_total" class="currency-switch idr-mode">IDR</button>
+                    <button onclick="togglePanelCurrency('total')" id="cur_total" class="currency-switch">IDR</button>
                 </div>
                 <span id="totalProfitLabel" class="text-lg font-black text-emerald-600">Rp 0</span>
             </div>
@@ -96,7 +96,7 @@
                         <span class="text-[8px] text-rose-700 font-black uppercase">Cash Alloc</span>
                         <div class="text-[10px] font-bold text-rose-600">(<input type="number" id="percCash" class="w-5 text-right bg-transparent p-0" value="20" oninput="updateSummaries()">%)</div>
                     </div>
-                    <button onclick="togglePanelCurrency('cash')" id="cur_cash" class="currency-switch idr-mode">IDR</button>
+                    <button onclick="togglePanelCurrency('cash')" id="cur_cash" class="currency-switch">IDR</button>
                 </div>
                 <span id="cashAllocLabel" class="text-lg font-black text-rose-600 block">Rp 0</span>
             </div>
@@ -106,7 +106,7 @@
                         <span class="text-[8px] text-slate-500 font-black uppercase">Dist. Core</span>
                         <div class="text-[10px] font-bold text-indigo-600">(<input type="number" id="percCore" class="w-5 text-right bg-transparent p-0" value="40" oninput="updateSummaries()">%)</div>
                     </div>
-                    <button onclick="togglePanelCurrency('core')" id="cur_core" class="currency-switch idr-mode">IDR</button>
+                    <button onclick="togglePanelCurrency('core')" id="cur_core" class="currency-switch">IDR</button>
                 </div>
                 <span id="distCoreLabel" class="text-lg font-black text-slate-700 block">Rp 0</span>
             </div>
@@ -116,7 +116,7 @@
                         <span class="text-[8px] text-slate-500 font-black uppercase">Dist. Defense</span>
                         <div class="text-[10px] font-bold text-slate-500">(<input type="number" id="percDef" class="w-5 text-right bg-transparent p-0" value="40" oninput="updateSummaries()">%)</div>
                     </div>
-                    <button onclick="togglePanelCurrency('def')" id="cur_def" class="currency-switch idr-mode">IDR</button>
+                    <button onclick="togglePanelCurrency('def')" id="cur_def" class="currency-switch">IDR</button>
                 </div>
                 <span id="distDefLabel" class="text-lg font-black text-slate-700 block">Rp 0</span>
             </div>
@@ -128,7 +128,7 @@
     </div>
 
     <script>
-        const STORAGE_KEY = 'porto_v11_2_precision_stable';
+        const STORAGE_KEY = 'portoV12_bulletproof_stable';
         
         let state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
             activeTabIndex: 0,
@@ -145,12 +145,30 @@
 
         function saveToStorage() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 
+        // FUNGSI INPUT PORTOFOLIO YANG DIPERBAIKI TOTAL
         function handleManualTotal(el) {
             let tab = state.tabs[state.activeTabIndex];
-            let raw = el.value.replace(/[^0-9.]/g, "").replace(/^0+(?=\d)/, ""); 
-            tab.manualTotal = parseFloat(raw) || 0;
-            el.value = tab.manualTotal === 0 ? "0" : (tab.manualTotalCur === 'IDR' ? Math.round(tab.manualTotal).toLocaleString('id-ID') : tab.manualTotal.toLocaleString('en-US'));
-            updateSummaries(); saveToStorage();
+            // 1. Hapus semua karakter kecuali angka dan titik desimal (untuk USD)
+            let cleanValue = el.value.replace(/[^0-9.]/g, "");
+            
+            // 2. Jika IDR, pastikan tidak ada titik desimal yang terbaca sebagai ribuan
+            if (tab.manualTotalCur === 'IDR') {
+                cleanValue = cleanValue.replace(/\./g, "");
+            }
+
+            let numVal = parseFloat(cleanValue) || 0;
+            tab.manualTotal = numVal;
+
+            // 3. Format tampilan saat mengetik
+            if (tab.manualTotalCur === 'IDR') {
+                el.value = Math.round(numVal).toLocaleString('id-ID');
+            } else {
+                // Untuk USD, biarkan input desimal mengalir
+                el.value = cleanValue; 
+            }
+
+            updateSummaries();
+            saveToStorage();
         }
 
         function togglePortfolioCurrency() {
@@ -165,25 +183,25 @@
             const systemValueUSD = tab.modal / kurs;
             document.getElementById('systemValueLabel').innerText = "$ " + formatUSD(systemValueUSD);
             
+            // Basis perhitungan Rebalancing murni dari Manual Total
+            const totalBasisIDR = tab.manualTotalCur === 'USD' ? tab.manualTotal * kurs : tab.manualTotal;
             let totalHarvestedIDR = 0;
 
             tab.assets.forEach((asset, idx) => {
                 const isUSD = asset.currency === 'USD';
                 const weight = asset.weight || 0;
                 
-                // 1. Target Modal (Untuk Profit Murni)
+                // Target Modal (Dual Logic)
                 let targetModalInCur = isUSD ? ((weight / 100) * systemValueUSD) : ((weight / 100) * tab.modal);
                 const profitMurni = asset.actual - targetModalInCur;
 
-                // 2. Rebalance Target (Berdasarkan Manual Total)
+                // Rebalance Target (Manual Total)
                 const totalPortoInAssetCur = isUSD 
                     ? (tab.manualTotalCur === 'USD' ? tab.manualTotal : tab.manualTotal / kurs)
                     : (tab.manualTotalCur === 'IDR' ? tab.manualTotal : tab.manualTotal * kurs);
 
                 const targetIdealInCur = (weight / 100) * totalPortoInAssetCur;
                 const diffActualTarget = asset.actual - targetIdealInCur;
-                
-                // Nominal Jual jika actual > target
                 const nominalJual = diffActualTarget > 0.01 ? diffActualTarget : 0;
                 totalHarvestedIDR += isUSD ? (nominalJual * kurs) : nominalJual;
 
@@ -193,28 +211,21 @@
                     const pCell = row.querySelector('.profit-cell');
                     pCell.innerText = isUSD ? formatUSD(profitMurni) : formatIDR(profitMurni);
                     pCell.className = `p-3 text-right font-bold profit-cell ${profitMurni >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
-                    
                     const aCell = row.querySelector('.action-cell');
-                    // FIX: Hilangkan Threshold agar aksi muncul sekecil apapun selisihnya
-                    if (diffActualTarget < -0.01) {
-                        aCell.innerHTML = `<span class="text-emerald-600 font-bold">BUY: ${isUSD ? '$'+formatUSD(Math.abs(diffActualTarget)) : 'Rp'+formatIDR(Math.abs(diffActualTarget))}</span>`;
-                    } else if (diffActualTarget > 0.01) {
-                        aCell.innerHTML = `<span class="text-rose-500 font-bold">SELL: ${isUSD ? '$'+formatUSD(diffActualTarget) : 'Rp'+formatIDR(diffActualTarget)}</span>`;
-                    } else { 
-                        aCell.innerHTML = '<span class="text-slate-400">HOLD</span>'; 
-                    }
+                    if (diffActualTarget < -0.01) aCell.innerHTML = `<span class="text-emerald-600 font-bold">BUY: ${isUSD ? '$'+formatUSD(Math.abs(diffActualTarget)) : 'Rp'+formatIDR(Math.abs(diffActualTarget))}</span>`;
+                    else if (diffActualTarget > 0.01) aCell.innerHTML = `<span class="text-rose-500 font-bold">SELL: ${isUSD ? '$'+formatUSD(diffActualTarget) : 'Rp'+formatIDR(diffActualTarget)}</span>`;
+                    else aCell.innerHTML = '<span class="text-slate-400">HOLD</span>';
                     row.querySelector('.sell-cell').innerText = isUSD ? '$'+formatUSD(nominalJual) : 'Rp'+formatIDR(nominalJual);
                 }
             });
 
-            // Update Panel Distribusi
+            // Panel Distribusi
             const pCash = (parseFloat(document.getElementById('percCash').value) || 0) / 100;
             const pCore = (parseFloat(document.getElementById('percCore').value) || 0) / 100;
             const pDef = (parseFloat(document.getElementById('percDef').value) || 0) / 100;
             const cashVal = totalHarvestedIDR * pCash;
-            const remaining = totalHarvestedIDR - cashVal;
-            const coreVal = remaining * (pCore / (pCore + pDef || 1));
-            const defVal = remaining * (pDef / (pCore + pDef || 1));
+            const coreVal = (totalHarvestedIDR - cashVal) * (pCore / (pCore + pDef || 1));
+            const defVal = (totalHarvestedIDR - cashVal) * (pDef / (pCore + pDef || 1));
             const pMap = { total: totalHarvestedIDR, cash: cashVal, core: coreVal, def: defVal };
             const ids = { total: 'totalProfitLabel', cash: 'cashAllocLabel', core: 'distCoreLabel', def: 'distDefLabel' };
 
@@ -274,11 +285,14 @@
             document.getElementById('kursInput').value = tab.kurs ? tab.kurs.toLocaleString('id-ID') : "0";
             document.getElementById('activePortoTitle').value = tab.title;
             document.getElementById('specialNotes').value = tab.notes || "";
+            
             const portoInput = document.getElementById('manualTotalInput');
-            portoInput.value = tab.manualTotal ? (tab.manualTotalCur === 'IDR' ? Math.round(tab.manualTotal).toLocaleString('id-ID') : tab.manualTotal.toLocaleString('en-US')) : "0";
+            portoInput.value = tab.manualTotal ? (tab.manualTotalCur === 'IDR' ? Math.round(tab.manualTotal).toLocaleString('id-ID') : tab.manualTotal.toString()) : "0";
+            
             const portoCurBtn = document.getElementById('portoCurBtn');
             portoCurBtn.innerText = tab.manualTotalCur;
             portoCurBtn.className = `currency-switch ${tab.manualTotalCur === 'USD' ? 'usd-mode' : 'idr-mode'}`;
+
             const tbody = document.getElementById('assetTableBody');
             tbody.innerHTML = '';
             tab.assets.forEach((asset, idx) => {
