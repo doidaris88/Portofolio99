@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Portfolio Pro v11.1 - Zero Clean Fix</title>
+    <title>Portfolio Pro v11.2 - Precision Rebalance</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
     <style>
@@ -33,7 +33,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
             <div class="lg:col-span-1">
                 <input type="text" id="activePortoTitle" class="text-xl font-black text-slate-800 border-b border-slate-200" oninput="saveTextOnly('title', this.value)">
-                <p class="text-[9px] text-slate-400 font-bold tracking-[0.3em] mt-1 uppercase">Clean Input v11.1</p>
+                <p class="text-[9px] text-slate-400 font-bold tracking-[0.3em] mt-1 uppercase">Precision Logic v11.2</p>
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 lg:col-span-4">
                 <div class="glass-panel p-3 rounded-xl border-l-2 border-slate-400">
@@ -68,7 +68,7 @@
                             <th class="text-center w-10">#</th>
                             <th class="min-w-[150px]">Asset Name</th>
                             <th class="text-center bg-slate-100/50 w-28">% Weight</th>
-                            <th class="text-center min-w-[120px]">Target Ideal</th>
+                            <th class="text-center min-w-[120px]">Target Modal</th>
                             <th class="text-right min-w-[140px]">Actual Size</th>
                             <th class="text-right min-w-[140px]">Profit Murni</th>
                             <th class="text-center bg-indigo-50 min-w-[150px]">Action</th>
@@ -128,7 +128,7 @@
     </div>
 
     <script>
-        const STORAGE_KEY = 'portoV11_final_clean_logic';
+        const STORAGE_KEY = 'porto_v11_2_precision_stable';
         
         let state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
             activeTabIndex: 0,
@@ -147,11 +147,10 @@
 
         function handleManualTotal(el) {
             let tab = state.tabs[state.activeTabIndex];
-            let raw = el.value.replace(/[^0-9]/g, "").replace(/^0+/, ""); 
-            tab.manualTotal = parseInt(raw, 10) || 0;
-            el.value = tab.manualTotal === 0 ? "0" : (tab.manualTotalCur === 'IDR' ? tab.manualTotal.toLocaleString('id-ID') : tab.manualTotal.toLocaleString('en-US'));
-            updateSummaries();
-            saveToStorage();
+            let raw = el.value.replace(/[^0-9.]/g, "").replace(/^0+(?=\d)/, ""); 
+            tab.manualTotal = parseFloat(raw) || 0;
+            el.value = tab.manualTotal === 0 ? "0" : (tab.manualTotalCur === 'IDR' ? Math.round(tab.manualTotal).toLocaleString('id-ID') : tab.manualTotal.toLocaleString('en-US'));
+            updateSummaries(); saveToStorage();
         }
 
         function togglePortfolioCurrency() {
@@ -165,34 +164,50 @@
             const kurs = tab.kurs || 1;
             const systemValueUSD = tab.modal / kurs;
             document.getElementById('systemValueLabel').innerText = "$ " + formatUSD(systemValueUSD);
-            const totalBasisIDR = tab.manualTotalCur === 'USD' ? tab.manualTotal * kurs : tab.manualTotal;
+            
             let totalHarvestedIDR = 0;
 
             tab.assets.forEach((asset, idx) => {
                 const isUSD = asset.currency === 'USD';
                 const weight = asset.weight || 0;
-                let targetInCurrency = isUSD ? ((weight / 100) * systemValueUSD) : ((weight / 100) * tab.modal);
-                const profitMurni = asset.actual - targetInCurrency;
-                const rebalanceTargetIDR = (weight / 100) * totalBasisIDR;
-                const rebalanceTargetInCur = isUSD ? (rebalanceTargetIDR / kurs) : rebalanceTargetIDR;
-                const diffActualTarget = asset.actual - rebalanceTargetInCur;
-                const nominalJual = diffActualTarget > 0 ? diffActualTarget : 0;
+                
+                // 1. Target Modal (Untuk Profit Murni)
+                let targetModalInCur = isUSD ? ((weight / 100) * systemValueUSD) : ((weight / 100) * tab.modal);
+                const profitMurni = asset.actual - targetModalInCur;
+
+                // 2. Rebalance Target (Berdasarkan Manual Total)
+                const totalPortoInAssetCur = isUSD 
+                    ? (tab.manualTotalCur === 'USD' ? tab.manualTotal : tab.manualTotal / kurs)
+                    : (tab.manualTotalCur === 'IDR' ? tab.manualTotal : tab.manualTotal * kurs);
+
+                const targetIdealInCur = (weight / 100) * totalPortoInAssetCur;
+                const diffActualTarget = asset.actual - targetIdealInCur;
+                
+                // Nominal Jual jika actual > target
+                const nominalJual = diffActualTarget > 0.01 ? diffActualTarget : 0;
                 totalHarvestedIDR += isUSD ? (nominalJual * kurs) : nominalJual;
 
                 const row = document.querySelector(`tr[data-idx="${idx}"]`);
                 if (row) {
-                    row.querySelector('.target-cell').innerText = isUSD ? '$'+formatUSD(targetInCurrency) : 'Rp'+formatIDR(targetInCurrency);
+                    row.querySelector('.target-cell').innerText = isUSD ? '$'+formatUSD(targetModalInCur) : 'Rp'+formatIDR(targetModalInCur);
                     const pCell = row.querySelector('.profit-cell');
                     pCell.innerText = isUSD ? formatUSD(profitMurni) : formatIDR(profitMurni);
                     pCell.className = `p-3 text-right font-bold profit-cell ${profitMurni >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
+                    
                     const aCell = row.querySelector('.action-cell');
-                    if (diffActualTarget < -500) aCell.innerHTML = `<span class="text-emerald-600 font-bold">BUY: ${isUSD ? '$'+formatUSD(Math.abs(diffActualTarget)) : 'Rp'+formatIDR(Math.abs(diffActualTarget))}</span>`;
-                    else if (diffActualTarget > 500) aCell.innerHTML = `<span class="text-rose-500 font-bold">SELL: ${isUSD ? '$'+formatUSD(diffActualTarget) : 'Rp'+formatIDR(diffActualTarget)}</span>`;
-                    else aCell.innerHTML = '<span class="text-slate-400">HOLD</span>';
+                    // FIX: Hilangkan Threshold agar aksi muncul sekecil apapun selisihnya
+                    if (diffActualTarget < -0.01) {
+                        aCell.innerHTML = `<span class="text-emerald-600 font-bold">BUY: ${isUSD ? '$'+formatUSD(Math.abs(diffActualTarget)) : 'Rp'+formatIDR(Math.abs(diffActualTarget))}</span>`;
+                    } else if (diffActualTarget > 0.01) {
+                        aCell.innerHTML = `<span class="text-rose-500 font-bold">SELL: ${isUSD ? '$'+formatUSD(diffActualTarget) : 'Rp'+formatIDR(diffActualTarget)}</span>`;
+                    } else { 
+                        aCell.innerHTML = '<span class="text-slate-400">HOLD</span>'; 
+                    }
                     row.querySelector('.sell-cell').innerText = isUSD ? '$'+formatUSD(nominalJual) : 'Rp'+formatIDR(nominalJual);
                 }
             });
 
+            // Update Panel Distribusi
             const pCash = (parseFloat(document.getElementById('percCash').value) || 0) / 100;
             const pCore = (parseFloat(document.getElementById('percCore').value) || 0) / 100;
             const pDef = (parseFloat(document.getElementById('percDef').value) || 0) / 100;
@@ -211,34 +226,25 @@
             });
         }
 
-        // POSISI PERBAIKAN: Fungsi format angka IDR/Umum
         function formatAndSave(el, field, assetIdx = null, assetField = null) {
             let cursor = el.selectionStart;
             let oldLen = el.value.length;
-            
-            // Perbaikan 1: Hapus semua karakter non-angka dan angka nol di depan
             let raw = el.value.replace(/\D/g, "").replace(/^0+/, "");
             let val = raw ? parseInt(raw, 10) : 0;
-            
             let tab = state.tabs[state.activeTabIndex];
             if (assetIdx !== null) tab.assets[assetIdx][assetField] = val;
             else tab[field] = val;
-            
             el.value = val === 0 ? "0" : val.toLocaleString('id-ID');
             let newLen = el.value.length;
             el.setSelectionRange(cursor + (newLen - oldLen), cursor + (newLen - oldLen));
             updateSummaries(); saveToStorage();
         }
 
-        // POSISI PERBAIKAN: Fungsi input USD Aset
         function handleUsdAssetInput(el, f, i, af) {
-            // Perbaikan 2: Hapus angka nol di depan untuk input desimal USD
             let valStr = el.value.replace(/[^0-9.]/g, '').replace(/^0+(?=\d)/, '');
             let val = parseFloat(valStr) || 0;
-            
             state.tabs[state.activeTabIndex].assets[i][af] = val;
-            el.value = valStr; // Mengupdate tampilan input secara bersih
-            
+            el.value = valStr; 
             updateSummaries(); saveToStorage();
         }
 
@@ -269,7 +275,7 @@
             document.getElementById('activePortoTitle').value = tab.title;
             document.getElementById('specialNotes').value = tab.notes || "";
             const portoInput = document.getElementById('manualTotalInput');
-            portoInput.value = tab.manualTotal ? (tab.manualTotalCur === 'IDR' ? tab.manualTotal.toLocaleString('id-ID') : tab.manualTotal.toLocaleString('en-US')) : "0";
+            portoInput.value = tab.manualTotal ? (tab.manualTotalCur === 'IDR' ? Math.round(tab.manualTotal).toLocaleString('id-ID') : tab.manualTotal.toLocaleString('en-US')) : "0";
             const portoCurBtn = document.getElementById('portoCurBtn');
             portoCurBtn.innerText = tab.manualTotalCur;
             portoCurBtn.className = `currency-switch ${tab.manualTotalCur === 'USD' ? 'usd-mode' : 'idr-mode'}`;
@@ -306,7 +312,13 @@
         }
 
         function addNewTab() {
-            state.tabs.push({ title: "PORTO " + (state.tabs.length + 1), modal: 1500000, kurs: 16000, manualTotal: 1500000, manualTotalCur: 'IDR', panelCurrencies: { total: 'IDR', cash: 'IDR', core: 'IDR', def: 'IDR' }, notes: "", assets: [] });
+            state.tabs.push({ 
+                title: "PORTO " + (state.tabs.length + 1), 
+                modal: 1500000, kurs: 16000, 
+                manualTotal: 0, manualTotalCur: 'USD',
+                panelCurrencies: { total: 'USD', cash: 'USD', core: 'USD', def: 'USD' },
+                notes: "", assets: [] 
+            });
             state.activeTabIndex = state.tabs.length - 1; saveToStorage(); render();
         }
 
