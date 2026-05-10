@@ -3,28 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Portfolio Pro v12.0 - Bulletproof Fix</title>
+    <title>Portfolio Pro v12.6 - UX Refined</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
     <style>
         body { background-color: #ffffff; color: #334155; font-family: 'Plus Jakarta Sans', sans-serif; min-height: 100vh; }
         .font-mono { font-family: 'Roboto Mono', monospace; font-variant-numeric: tabular-nums; }
         .glass-panel { background: #f8fafc; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); }
+        
+        /* STYLING TAB BARU: Lebih Lebar & Rapi */
+        .tab-item { min-width: 160px; transition: all 0.2s; position: relative; }
         .tab-active { background: white; border-bottom: 3px solid #6366f1; color: #1e293b; font-weight: 800; }
         .tab-inactive { color: #94a3b8; border-bottom: 3px solid transparent; }
+        .btn-delete-tab { color: #ef4444; font-weight: bold; font-size: 16px; padding: 4px 10px; border-radius: 6px; transition: background 0.2s; }
+        .btn-delete-tab:hover { background: #fee2e2; }
+
         input { background: transparent; outline: none; border: none; color: #1e293b; width: 100%; }
         th { background-color: #f1f5f9; color: #64748b; font-size: 9px; font-weight: 900; text-transform: uppercase; padding: 12px 8px; }
-        .currency-switch { font-size: 8px; font-weight: 900; padding: 2px 6px; border-radius: 4px; cursor: pointer; user-select: none; transition: all 0.2s; }
+        .currency-switch { font-size: 8px; font-weight: 900; padding: 2px 6px; border-radius: 4px; cursor: pointer; user-select: none; }
         .idr-mode { background: #e0f2fe; color: #0369a1; }
         .usd-mode { background: #fef3c7; color: #92400e; }
+
+        /* STYLING DRAG & DROP */
+        .sortable-ghost { opacity: 0.1; background: #6366f1 !important; }
+        .sortable-chosen { background: #f5f3ff !important; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .drag-handle { cursor: grab; color: #6366f1; font-size: 16px; transition: transform 0.2s; }
+        .drag-handle:active { cursor: grabbing; transform: scale(1.2); }
+        select { background: transparent; outline: none; border: none; cursor: pointer; color: #6366f1; font-weight: bold; }
     </style>
 </head>
 <body class="p-0">
 
     <nav class="w-full bg-slate-50 border-b border-slate-200 sticky top-0 z-50">
-        <div class="max-w-[1400px] mx-auto flex items-center overflow-x-auto px-2">
-            <div id="portfolioTabs" class="flex items-center h-12"></div>
-            <button onclick="addNewTab()" class="px-5 py-3 text-slate-400 hover:text-indigo-600 text-xl font-bold">+</button>
+        <div class="max-w-[1400px] mx-auto flex items-center justify-between px-2">
+            <div class="flex items-center overflow-x-auto scrollbar-hide">
+                <div id="portfolioTabs" class="flex items-center h-14"></div>
+                <button onclick="addNewTab()" class="ml-2 px-6 h-14 text-indigo-600 hover:bg-indigo-50 text-2xl font-bold transition-colors">+</button>
+            </div>
+            <button onclick="exportToExcel()" class="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg text-[10px] font-bold hover:bg-indigo-700 transition-all shadow-md">
+                📊 EXCEL
+            </button>
         </div>
     </nav>
 
@@ -33,7 +53,12 @@
         <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
             <div class="lg:col-span-1">
                 <input type="text" id="activePortoTitle" class="text-xl font-black text-slate-800 border-b border-slate-200" oninput="saveTextOnly('title', this.value)">
-                <p class="text-[9px] text-slate-400 font-bold tracking-[0.3em] mt-1 uppercase">Precision v12.0</p>
+                <div class="flex items-center gap-2 mt-1">
+                    <p class="text-[9px] text-slate-400 font-bold tracking-[0.3em] uppercase">V12.6 Refined</p>
+                    <div class="h-1.5 w-16 bg-slate-100 rounded-full overflow-hidden">
+                        <div id="weightProgressBar" class="h-full bg-indigo-500" style="width: 0%"></div>
+                    </div>
+                </div>
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 lg:col-span-4">
                 <div class="glass-panel p-3 rounded-xl border-l-2 border-slate-400">
@@ -44,15 +69,13 @@
                     <span class="text-[8px] text-slate-500 font-black uppercase mb-0.5 block">Kurs USD</span>
                     <input type="text" id="kursInput" class="text-base font-extrabold font-mono" oninput="formatAndSave(this, 'kurs')">
                 </div>
-                
                 <div class="glass-panel p-3 rounded-xl border-l-2 border-indigo-500 bg-indigo-50/30">
                     <div class="flex justify-between items-center mb-0.5">
                         <span class="text-[8px] text-indigo-600 font-black uppercase block">Portofolio Saat Ini</span>
-                        <button onclick="togglePortfolioCurrency()" id="portoCurBtn" class="currency-switch">IDR</button>
+                        <button onclick="togglePortfolioCurrency()" id="portoCurBtn" class="currency-switch idr-mode">IDR</button>
                     </div>
                     <input type="text" id="manualTotalInput" class="text-base font-black text-indigo-700 font-mono" placeholder="0" oninput="handleManualTotal(this)">
                 </div>
-
                 <div class="bg-indigo-600 p-3 rounded-xl shadow-lg flex flex-col justify-center">
                     <span class="text-[8px] text-indigo-200 font-black uppercase mb-0.5 block">System Value (Modal/Kurs)</span>
                     <span id="systemValueLabel" class="text-base font-black text-white font-mono">$ 0.00</span>
@@ -62,16 +85,30 @@
 
         <div class="glass-panel rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
+                <table class="w-full text-left border-collapse" id="mainTable">
                     <thead>
                         <tr class="border-b border-slate-200">
-                            <th class="text-center w-10">#</th>
+                            <th class="text-center w-12">Drag</th>
                             <th class="min-w-[150px]">Asset Name</th>
-                            <th class="text-center bg-slate-100/50 w-28">% Weight</th>
+                            <th class="text-center bg-slate-100/50 w-28">
+                                % Weight 
+                                <select onchange="handleSortWeight(this.value)" class="text-[10px]">
+                                    <option value="">🔻</option>
+                                    <option value="high">High</option>
+                                    <option value="low">Low</option>
+                                </select>
+                            </th>
                             <th class="text-center min-w-[120px]">Target Modal</th>
                             <th class="text-right min-w-[140px]">Actual Size</th>
                             <th class="text-right min-w-[140px]">Profit Murni</th>
-                            <th class="text-center bg-indigo-50 min-w-[150px]">Action</th>
+                            <th class="text-center bg-indigo-50 min-w-[150px]">
+                                Action
+                                <select onchange="handleSortAction(this.value)" class="text-[10px]">
+                                    <option value="">🔻</option>
+                                    <option value="sell">Sell</option>
+                                    <option value="buy">Buy</option>
+                                </select>
+                            </th>
                             <th class="text-right min-w-[120px]">Nominal Jual (Lock)</th>
                             <th class="text-center w-12 border-l border-slate-100">Del</th>
                         </tr>
@@ -121,14 +158,10 @@
                 <span id="distDefLabel" class="text-lg font-black text-slate-700 block">Rp 0</span>
             </div>
         </div>
-
-        <div class="glass-panel rounded-2xl px-3 pb-3 pt-5 border-l-4 border-slate-700">
-            <textarea id="specialNotes" rows="5" class="w-full bg-black/5 border border-slate-100 rounded-xl p-4 text-xs text-slate-600 outline-none placeholder:text-slate-400 font-mono transition-all" placeholder="Catatan Strategi..." oninput="saveTextOnly('notes', this.value)"></textarea>
-        </div>
     </div>
 
     <script>
-        const STORAGE_KEY = 'portoV12_bulletproof_stable';
+        const STORAGE_KEY = 'portoV12_6_final';
         
         let state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
             activeTabIndex: 0,
@@ -140,35 +173,19 @@
             }]
         };
 
+        function saveToStorage() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
         const formatIDR = (n) => Math.round(n || 0).toLocaleString('id-ID');
         const formatUSD = (n) => (n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-        function saveToStorage() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-
-        // FUNGSI INPUT PORTOFOLIO YANG DIPERBAIKI TOTAL
         function handleManualTotal(el) {
             let tab = state.tabs[state.activeTabIndex];
-            // 1. Hapus semua karakter kecuali angka dan titik desimal (untuk USD)
-            let cleanValue = el.value.replace(/[^0-9.]/g, "");
-            
-            // 2. Jika IDR, pastikan tidak ada titik desimal yang terbaca sebagai ribuan
-            if (tab.manualTotalCur === 'IDR') {
-                cleanValue = cleanValue.replace(/\./g, "");
-            }
-
-            let numVal = parseFloat(cleanValue) || 0;
+            let clean = el.value.replace(/[^0-9.]/g, "");
+            if (tab.manualTotalCur === 'IDR') clean = clean.replace(/\./g, "");
+            let numVal = parseFloat(clean) || 0;
             tab.manualTotal = numVal;
-
-            // 3. Format tampilan saat mengetik
-            if (tab.manualTotalCur === 'IDR') {
-                el.value = Math.round(numVal).toLocaleString('id-ID');
-            } else {
-                // Untuk USD, biarkan input desimal mengalir
-                el.value = cleanValue; 
-            }
-
-            updateSummaries();
-            saveToStorage();
+            el.value = tab.manualTotalCur === 'IDR' ? Math.round(numVal).toLocaleString('id-ID') : clean;
+            updateSummaries(); saveToStorage();
         }
 
         function togglePortfolioCurrency() {
@@ -183,19 +200,18 @@
             const systemValueUSD = tab.modal / kurs;
             document.getElementById('systemValueLabel').innerText = "$ " + formatUSD(systemValueUSD);
             
-            // Basis perhitungan Rebalancing murni dari Manual Total
             const totalBasisIDR = tab.manualTotalCur === 'USD' ? tab.manualTotal * kurs : tab.manualTotal;
             let totalHarvestedIDR = 0;
+            let totalWeight = 0;
 
             tab.assets.forEach((asset, idx) => {
                 const isUSD = asset.currency === 'USD';
                 const weight = asset.weight || 0;
+                totalWeight += weight;
                 
-                // Target Modal (Dual Logic)
                 let targetModalInCur = isUSD ? ((weight / 100) * systemValueUSD) : ((weight / 100) * tab.modal);
                 const profitMurni = asset.actual - targetModalInCur;
 
-                // Rebalance Target (Manual Total)
                 const totalPortoInAssetCur = isUSD 
                     ? (tab.manualTotalCur === 'USD' ? tab.manualTotal : tab.manualTotal / kurs)
                     : (tab.manualTotalCur === 'IDR' ? tab.manualTotal : tab.manualTotal * kurs);
@@ -219,7 +235,9 @@
                 }
             });
 
-            // Panel Distribusi
+            document.getElementById('weightProgressBar').style.width = totalWeight + '%';
+            document.getElementById('weightProgressBar').className = `h-full ${totalWeight > 100 ? 'bg-rose-500' : 'bg-indigo-500'}`;
+
             const pCash = (parseFloat(document.getElementById('percCash').value) || 0) / 100;
             const pCore = (parseFloat(document.getElementById('percCore').value) || 0) / 100;
             const pDef = (parseFloat(document.getElementById('percDef').value) || 0) / 100;
@@ -242,9 +260,8 @@
             let oldLen = el.value.length;
             let raw = el.value.replace(/\D/g, "").replace(/^0+/, "");
             let val = raw ? parseInt(raw, 10) : 0;
-            let tab = state.tabs[state.activeTabIndex];
-            if (assetIdx !== null) tab.assets[assetIdx][assetField] = val;
-            else tab[field] = val;
+            if (assetIdx !== null) state.tabs[state.activeTabIndex].assets[assetIdx][assetField] = val;
+            else state.tabs[state.activeTabIndex][field] = val;
             el.value = val === 0 ? "0" : val.toLocaleString('id-ID');
             let newLen = el.value.length;
             el.setSelectionRange(cursor + (newLen - oldLen), cursor + (newLen - oldLen));
@@ -253,20 +270,107 @@
 
         function handleUsdAssetInput(el, f, i, af) {
             let valStr = el.value.replace(/[^0-9.]/g, '').replace(/^0+(?=\d)/, '');
-            let val = parseFloat(valStr) || 0;
-            state.tabs[state.activeTabIndex].assets[i][af] = val;
-            el.value = valStr; 
-            updateSummaries(); saveToStorage();
+            state.tabs[state.activeTabIndex].assets[i][af] = parseFloat(valStr) || 0;
+            el.value = valStr; updateSummaries(); saveToStorage();
         }
 
         function handleWeightInput(idx, el) {
-            let val = el.value.replace(/^0+(?=\d)/, ''); if (val === '') val = '0'; el.value = val;
+            let val = el.value.replace(/^0+(?=\d)/, ''); if (val === '') val = '0';
             let numVal = parseFloat(val) || 0;
             let tab = state.tabs[state.activeTabIndex];
-            let others = tab.assets.reduce((sum, asset, i) => i === idx ? sum : sum + (parseFloat(asset.weight) || 0), 0);
-            if (numVal > (100 - others)) { numVal = 100 - others; el.value = numVal; }
-            tab.assets[idx].weight = numVal;
+            let others = tab.assets.reduce((sum, a, i) => i === idx ? sum : sum + (parseFloat(a.weight) || 0), 0);
+            if (numVal > (100 - others)) numVal = 100 - others;
+            el.value = numVal; tab.assets[idx].weight = numVal;
             updateSummaries(); saveToStorage();
+        }
+
+        function handleSortWeight(type) {
+            if(!type) return;
+            state.tabs[state.activeTabIndex].assets.sort((a,b) => type === 'high' ? b.weight - a.weight : a.weight - b.weight);
+            render();
+        }
+
+        function handleSortAction(type) {
+            if(!type) return;
+            const tab = state.tabs[state.activeTabIndex];
+            const kurs = tab.kurs || 1;
+            state.tabs[state.activeTabIndex].assets.sort((a, b) => {
+                const totalPortoA = a.currency === 'USD' ? (tab.manualTotalCur === 'USD' ? tab.manualTotal : tab.manualTotal/kurs) : (tab.manualTotalCur === 'IDR' ? tab.manualTotal : tab.manualTotal*kurs);
+                const totalPortoB = b.currency === 'USD' ? (tab.manualTotalCur === 'USD' ? tab.manualTotal : tab.manualTotal/kurs) : (tab.manualTotalCur === 'IDR' ? tab.manualTotal : tab.manualTotal*kurs);
+                const diffA = a.actual - ((a.weight/100) * totalPortoA);
+                const diffB = b.actual - ((b.weight/100) * totalPortoB);
+                return type === 'sell' ? diffB - diffA : diffA - diffB;
+            });
+            render();
+        }
+
+        function exportToExcel() {
+            const tab = state.tabs[state.activeTabIndex];
+            const data = tab.assets.map((a, i) => ({ 'No': i + 1, 'Name': a.name, 'Weight': a.weight, 'Cur': a.currency, 'Actual': a.actual }));
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Portfolio");
+            XLSX.writeFile(wb, `${tab.title}.xlsx`);
+        }
+
+        function render() {
+            const container = document.getElementById('portfolioTabs');
+            container.innerHTML = '';
+            state.tabs.forEach((tab, idx) => {
+                const btn = document.createElement('div');
+                btn.className = `tab-item px-8 h-14 cursor-pointer border-r border-slate-100 flex items-center justify-between transition-all ${idx === state.activeTabIndex ? 'tab-active' : 'tab-inactive hover:bg-slate-50'}`;
+                btn.innerHTML = `<span class="text-[11px] font-black uppercase truncate mr-4">${tab.title || 'PORTO'}</span>
+                                ${state.tabs.length > 1 ? `<span onclick="event.stopPropagation(); deleteTab(${idx})" class="btn-delete-tab">×</span>` : ''}`;
+                btn.onclick = () => { state.activeTabIndex = idx; render(); };
+                container.appendChild(btn);
+            });
+
+            const tab = state.tabs[state.activeTabIndex];
+            document.getElementById('modalInput').value = tab.modal ? tab.modal.toLocaleString('id-ID') : "0";
+            document.getElementById('kursInput').value = tab.kurs ? tab.kurs.toLocaleString('id-ID') : "0";
+            document.getElementById('activePortoTitle').value = tab.title;
+            document.getElementById('manualTotalInput').value = tab.manualTotal ? (tab.manualTotalCur === 'IDR' ? Math.round(tab.manualTotal).toLocaleString('id-ID') : tab.manualTotal.toString()) : "0";
+            const pBtn = document.getElementById('portoCurBtn');
+            pBtn.innerText = tab.manualTotalCur; pBtn.className = `currency-switch ${tab.manualTotalCur === 'USD' ? 'usd-mode' : 'idr-mode'}`;
+            
+            const tbody = document.getElementById('assetTableBody');
+            tbody.innerHTML = '';
+            tab.assets.forEach((asset, idx) => {
+                const isUSD = asset.currency === 'USD';
+                const tr = document.createElement('tr');
+                tr.setAttribute('data-idx', idx);
+                tr.className = "hover:bg-slate-50 border-b border-slate-100";
+                tr.innerHTML = `<td class="p-3 text-center drag-handle">⠿</td>
+                    <td class="p-3"><div class="flex items-center gap-2"><input type="text" value="${asset.name}" class="font-bold uppercase" oninput="state.tabs[state.activeTabIndex].assets[${idx}].name=this.value.toUpperCase(); saveToStorage()"> <span onclick="toggleAssetCurrency(${idx})" class="currency-switch ${isUSD?'usd-mode':'idr-mode'}">${asset.currency}</span></div></td>
+                    <td class="p-3 bg-slate-100/50"><input type="number" value="${asset.weight || 0}" class="text-center font-black text-indigo-600" oninput="handleWeightInput(${idx}, this)"></td>
+                    <td class="p-3 text-center text-slate-500 font-bold target-cell">-</td>
+                    <td class="p-3 text-right"><input type="text" value="${isUSD ? asset.actual : asset.actual.toLocaleString('id-ID')}" class="text-right" oninput="${isUSD ? 'handleUsdAssetInput' : 'formatAndSave'}(this, null, ${idx}, 'actual')"></td>
+                    <td class="p-3 text-right font-bold profit-cell">-</td>
+                    <td class="p-3 text-center bg-indigo-50/30 action-cell">-</td>
+                    <td class="p-3 text-right text-rose-500 font-bold sell-cell">-</td>
+                    <td class="p-3 text-center border-l border-slate-100 cursor-pointer text-slate-300 hover:text-rose-500" onclick="deleteRow(${idx})">🗑️</td>`;
+                tbody.appendChild(tr);
+            });
+            updateSummaries(); initSortable();
+        }
+
+        function initSortable() {
+            const el = document.getElementById('assetTableBody');
+            Sortable.create(el, {
+                handle: '.drag-handle',
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                animation: 200,
+                onEnd: function() {
+                    const newAssets = [];
+                    el.querySelectorAll('tr').forEach(tr => {
+                        const idx = tr.getAttribute('data-idx');
+                        newAssets.push(state.tabs[state.activeTabIndex].assets[idx]);
+                    });
+                    state.tabs[state.activeTabIndex].assets = newAssets;
+                    saveToStorage(); render();
+                }
+            });
         }
 
         function toggleAssetCurrency(i) {
@@ -279,60 +383,8 @@
             updateSummaries(); saveToStorage();
         }
 
-        function render() {
-            const tab = state.tabs[state.activeTabIndex];
-            document.getElementById('modalInput').value = tab.modal ? tab.modal.toLocaleString('id-ID') : "0";
-            document.getElementById('kursInput').value = tab.kurs ? tab.kurs.toLocaleString('id-ID') : "0";
-            document.getElementById('activePortoTitle').value = tab.title;
-            document.getElementById('specialNotes').value = tab.notes || "";
-            
-            const portoInput = document.getElementById('manualTotalInput');
-            portoInput.value = tab.manualTotal ? (tab.manualTotalCur === 'IDR' ? Math.round(tab.manualTotal).toLocaleString('id-ID') : tab.manualTotal.toString()) : "0";
-            
-            const portoCurBtn = document.getElementById('portoCurBtn');
-            portoCurBtn.innerText = tab.manualTotalCur;
-            portoCurBtn.className = `currency-switch ${tab.manualTotalCur === 'USD' ? 'usd-mode' : 'idr-mode'}`;
-
-            const tbody = document.getElementById('assetTableBody');
-            tbody.innerHTML = '';
-            tab.assets.forEach((asset, idx) => {
-                const isUSD = asset.currency === 'USD';
-                const tr = document.createElement('tr');
-                tr.setAttribute('data-idx', idx);
-                tr.className = "hover:bg-slate-50 border-b border-slate-100";
-                tr.innerHTML = `<td class="p-3 text-center text-slate-400">${idx + 1}</td>
-                    <td class="p-3"><div class="flex items-center gap-2"><input type="text" value="${asset.name}" class="font-bold uppercase" oninput="state.tabs[state.activeTabIndex].assets[${idx}].name=this.value.toUpperCase(); saveToStorage()"> <span onclick="toggleAssetCurrency(${idx})" class="currency-switch ${isUSD?'usd-mode':'idr-mode'}">${asset.currency}</span></div></td>
-                    <td class="p-3 bg-slate-100/50"><input type="number" value="${asset.weight || 0}" class="text-center font-black text-indigo-600" oninput="handleWeightInput(${idx}, this)"></td>
-                    <td class="p-3 text-center text-slate-500 font-bold target-cell">-</td>
-                    <td class="p-3 text-right"><input type="text" value="${isUSD ? asset.actual : asset.actual.toLocaleString('id-ID')}" class="text-right" oninput="${isUSD ? 'handleUsdAssetInput' : 'formatAndSave'}(this, null, ${idx}, 'actual')"></td>
-                    <td class="p-3 text-right font-bold profit-cell">-</td>
-                    <td class="p-3 text-center bg-indigo-50/30 action-cell">-</td>
-                    <td class="p-3 text-right text-rose-500 font-bold sell-cell">-</td>
-                    <td class="p-3 text-center border-l border-slate-100 cursor-pointer text-slate-300 hover:text-rose-500" onclick="deleteRow(${idx})">🗑️</td>`;
-                tbody.appendChild(tr);
-            });
-            updateSummaries(); renderTabs();
-        }
-
-        function renderTabs() {
-            const container = document.getElementById('portfolioTabs'); container.innerHTML = '';
-            state.tabs.forEach((tab, idx) => {
-                const btn = document.createElement('div');
-                btn.className = `px-6 py-3 cursor-pointer border-r border-slate-100 flex items-center ${idx === state.activeTabIndex ? 'tab-active' : 'tab-inactive hover:bg-slate-50'}`;
-                btn.innerHTML = `<span class="text-[10px] font-black uppercase">${tab.title || 'PORTO'}</span>${state.tabs.length > 1 ? `<span onclick="event.stopPropagation(); deleteTab(${idx})" class="ml-2 text-slate-300">×</span>` : ''}`;
-                btn.onclick = () => { state.activeTabIndex = idx; render(); };
-                container.appendChild(btn);
-            });
-        }
-
         function addNewTab() {
-            state.tabs.push({ 
-                title: "PORTO " + (state.tabs.length + 1), 
-                modal: 1500000, kurs: 16000, 
-                manualTotal: 0, manualTotalCur: 'USD',
-                panelCurrencies: { total: 'USD', cash: 'USD', core: 'USD', def: 'USD' },
-                notes: "", assets: [] 
-            });
+            state.tabs.push({ title: "PORTO " + (state.tabs.length + 1), modal: 1500000, kurs: 16000, manualTotal: 0, manualTotalCur: 'USD', panelCurrencies: { total: 'USD', cash: 'USD', core: 'USD', def: 'USD' }, notes: "", assets: [] });
             state.activeTabIndex = state.tabs.length - 1; saveToStorage(); render();
         }
 
