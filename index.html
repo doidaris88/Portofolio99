@@ -3,24 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Portfolio Pro v13.7 - Smart Focus</title>
+    <title>Portfolio Pro v13.9 - Strict Allocation</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
     <style>
-        body { 
-            background-color: #ffffff; 
-            color: #334155; 
-            font-family: 'Plus Jakarta Sans', "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif; 
-            min-height: 100vh; 
-        }
-        .font-mono { font-family: 'Roboto Mono', monospace; font-variant-numeric: tabular-nums; }
+        body { background-color: #ffffff; color: #334155; font-family: 'Plus Jakarta Sans', sans-serif; min-height: 100vh; }
         .glass-panel { background: #f8fafc; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); }
         .tab-item { min-width: 140px; max-width: 180px; height: 56px; transition: all 0.2s; border-right: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; cursor: pointer; }
         .tab-active { background: white; border-bottom: 4px solid #f97316; color: #f97316; font-weight: 800; }
         .tab-inactive { color: #94a3b8; border-bottom: 3px solid transparent; }
         .btn-delete-tab { color: #ef4444; font-size: 12px; font-weight: 900; margin-left: 8px; cursor: pointer; opacity: 0.6; }
-        .btn-delete-tab:hover { opacity: 1; transform: scale(1.2); }
         input { background: transparent; outline: none; border: none; color: #1e293b; width: 100%; }
         th { background-color: #f1f5f9; color: #64748b; font-size: 9px; font-weight: 900; text-transform: uppercase; padding: 12px 8px; }
         .currency-switch { font-size: 8px; font-weight: 900; padding: 2px 6px; border-radius: 4px; cursor: pointer; user-select: none; }
@@ -35,9 +28,9 @@
         <div class="max-w-[1400px] mx-auto flex items-center justify-between px-2">
             <div class="flex items-center overflow-x-auto scrollbar-hide">
                 <div id="portfolioTabs" class="flex items-center"></div>
-                <button onclick="addNewTab()" class="px-6 h-14 text-orange-500 hover:bg-orange-50 text-2xl font-bold transition-all">+</button>
+                <button onclick="addNewTab()" class="px-6 h-14 text-orange-500 hover:bg-orange-50 text-2xl font-bold">+</button>
             </div>
-            <button onclick="exportToExcel()" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-[10px] font-bold hover:bg-black shadow-md mr-2"> EXCEL</button>
+            <button onclick="exportToExcel()" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-[10px] font-bold hover:bg-black shadow-md mr-2">📊 EXCEL</button>
         </div>
     </nav>
 
@@ -46,7 +39,7 @@
             <div class="lg:col-span-1">
                 <input type="text" id="activePortoTitle" class="text-xl font-black text-slate-800 border-b border-slate-200" oninput="saveTextOnly('title', this.value)">
                 <div class="flex items-center gap-2 mt-1">
-                    <p class="text-[9px] text-slate-400 font-bold tracking-[0.3em] uppercase">V13.7 Smart Focus</p>
+                    <p class="text-[9px] text-slate-400 font-bold tracking-[0.3em] uppercase">V13.9 Strict</p>
                     <div class="h-1.5 w-16 bg-slate-100 rounded-full overflow-hidden">
                         <div id="weightProgressBar" class="h-full bg-orange-500" style="width: 0%"></div>
                     </div>
@@ -63,7 +56,7 @@
                 </div>
                 <div class="glass-panel p-3 rounded-xl border-l-2 border-orange-500 bg-orange-50/20">
                     <div class="flex justify-between items-center mb-0.5">
-                        <span class="text-[8px] text-orange-600 font-black uppercase block">Portofolio Saat Ini</span>
+                        <span class="text-[8px] text-orange-600 font-black uppercase block">Porto Sekarang</span>
                         <button onclick="togglePortfolioCurrency()" id="portoCurBtn" class="currency-switch idr-mode">IDR</button>
                     </div>
                     <input type="text" id="manualTotalInput" class="text-base font-black text-orange-700 font-mono" placeholder="0" oninput="handleManualTotal(this)" onfocus="moveCursorToEnd(this)">
@@ -84,11 +77,11 @@
                             <th class="text-center w-12">DEL</th>
                             <th class="min-w-[150px]">Ticker / Asset</th>
                             <th class="text-center bg-slate-100/50 w-28">Weight <select onchange="handleSortWeight(this.value)" class="sort-select"><option value="">&#128315;</option><option value="high">High</option><option value="low">Low</option></select></th>
-                            <th class="text-center min-w-[120px]">Target Modal</th>
-                            <th class="text-right min-w-[140px]">Actual Size</th>
+                            <th class="text-center min-w-[120px]">Target</th>
+                            <th class="text-right min-w-[140px]">Actual</th>
                             <th class="text-right min-w-[140px]">Profit</th>
                             <th class="text-center bg-orange-50 min-w-[150px]">Action <select onchange="handleSortAction(this.value)" class="sort-select"><option value="">&#128315;</option><option value="sell">Sell</option><option value="buy">Buy</option></select></th>
-                            <th class="text-right min-w-[120px]">Nominal Jual</th>
+                            <th class="text-right min-w-[120px]">Lock</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 font-mono text-[11px]" id="assetTableBody"></tbody>
@@ -118,7 +111,7 @@
     </div>
 
     <script>
-        const STORAGE_KEY = 'porto_v13_7_focus';
+        const STORAGE_KEY = 'porto_v13_9_strict';
         let state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
             activeTabIndex: 0,
             tabs: [{ title: "PORTFOLIO 1", modal: 1500000, kurs: 16000, manualTotal: 1500000, manualTotalCur: 'IDR', panelCurrencies: { total: 'IDR', cash: 'IDR', core: 'IDR', def: 'IDR' }, assets: [] }]
@@ -126,12 +119,10 @@
 
         function saveToStorage() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
         
-        // FUNGSI BARU: Paksa cursor ke posisi paling belakang
         function moveCursorToEnd(el) {
             setTimeout(() => {
                 const val = el.value;
-                el.value = '';
-                el.value = val;
+                el.value = ''; el.value = val;
                 el.setSelectionRange(val.length, val.length);
             }, 1);
         }
@@ -186,11 +177,14 @@
                 }
             });
 
-            document.getElementById('weightProgressBar').style.width = totalWeight + '%';
-            const pMap = { total: totalHarvestedIDR, cash: totalHarvestedIDR * ((parseFloat(document.getElementById('percCash').value) || 0)/100), core: 0, def: 0 };
-            pMap.core = (totalHarvestedIDR - pMap.cash) * ((parseFloat(document.getElementById('percCore').value) || 0) / 80);
-            pMap.def = (totalHarvestedIDR - pMap.cash) * ((parseFloat(document.getElementById('percDef').value) || 0) / 80);
-            
+            document.getElementById('weightProgressBar').style.width = Math.min(totalWeight, 100) + '%';
+            const pCash = (parseFloat(document.getElementById('percCash').value) || 0) / 100;
+            const cashVal = totalHarvestedIDR * pCash;
+            const pCore = (parseFloat(document.getElementById('percCore').value) || 0);
+            const pDef = (parseFloat(document.getElementById('percDef').value) || 0);
+            const coreVal = (totalHarvestedIDR - cashVal) * (pCore / (pCore + pDef || 1));
+            const defVal = (totalHarvestedIDR - cashVal) * (pDef / (pCore + pDef || 1));
+            const pMap = { total: totalHarvestedIDR, cash: cashVal, core: coreVal, def: defVal };
             const ids = { total: 'totalProfitLabel', cash: 'cashAllocLabel', core: 'distCoreLabel', def: 'distDefLabel' };
             Object.keys(pMap).forEach(k => {
                 const isUSD = tab.panelCurrencies[k] === 'USD';
@@ -216,11 +210,24 @@
             updateSummaries(); saveToStorage();
         }
 
+        // --- CORE FIX: LOGIKA WEIGHT STRICT ---
         function handleWeightInput(idx, el) {
-            let valStr = el.value.replace(/^0+(?=\d)/, "");
+            let valStr = el.value.replace(/[^0-9.]/g, "").replace(/^0+(?=\d)/, "");
             let numVal = parseFloat(valStr) || 0;
+            let tab = state.tabs[state.activeTabIndex];
+            
+            // Hitung total weight aset LAINNYA
+            let totalOthers = tab.assets.reduce((sum, asset, i) => i === idx ? sum : sum + (parseFloat(asset.weight) || 0), 0);
+            let available = 100 - totalOthers;
+
+            // Jika input melebihi sisa yang tersedia
+            if (numVal > available) {
+                numVal = available;
+                valStr = numVal.toString();
+            }
+
             el.value = valStr === "" ? "0" : valStr;
-            state.tabs[state.activeTabIndex].assets[idx].weight = numVal;
+            tab.assets[idx].weight = numVal;
             updateSummaries(); saveToStorage();
         }
 
@@ -263,9 +270,7 @@
                 tr.id = `row-${idx}`; tr.className = "hover:bg-slate-50 border-b border-slate-100 bg-white";
                 tr.innerHTML = `
                     <td class="p-3 text-center text-slate-400 font-bold">${idx + 1}</td>
-                    <td class="p-3 text-center" onclick="deleteRow(${idx})">
-                        <button class="text-rose-500 font-bold hover:bg-rose-50 w-8 h-8 rounded-lg flex items-center justify-center mx-auto">&#128465;</button>
-                    </td>
+                    <td class="p-3 text-center cursor-pointer text-[18px]" onclick="deleteRow(${idx})">&#128465;</td>
                     <td class="p-3"><div class="flex items-center gap-2"><input type="text" value="${asset.name}" class="font-bold uppercase" oninput="state.tabs[state.activeTabIndex].assets[${idx}].name=this.value.toUpperCase(); saveToStorage()"> <span onclick="toggleAssetCurrency(${idx})" class="currency-switch ${isUSD?'usd-mode':'idr-mode'}">${asset.currency}</span></div></td>
                     <td class="p-3 bg-slate-100/50"><input type="number" value="${asset.weight || 0}" class="text-center font-black text-orange-600" oninput="handleWeightInput(${idx}, this)" onfocus="moveCursorToEnd(this)"></td>
                     <td class="p-3 text-center text-slate-500 font-bold target-cell">-</td>
